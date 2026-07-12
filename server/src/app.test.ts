@@ -12,14 +12,11 @@ describe('createApp', () => {
     expect(await res.json()).toEqual({ status: 'ok' })
   })
 
-  it('serves the SPA entry point', async () => {
-    const res = await app.request('/')
-    expect(res.status).toBe(200)
-    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
-  })
-
-  it('falls back to the SPA entry point for unknown paths', async () => {
-    const res = await app.request('/some/unknown/path')
+  it.each([
+    ['the SPA entry point', '/'],
+    ['the SPA entry point for unknown paths', '/some/unknown/path'],
+  ])('serves %s', async (_description, path) => {
+    const res = await app.request(path)
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8')
   })

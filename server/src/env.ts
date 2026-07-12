@@ -1,4 +1,16 @@
-const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'] as const
+import type { Level as PinoLevel } from 'pino'
+
+// Pinned to pino's own Level union via `satisfies` so a future pino major
+// that changes the accepted levels fails to compile here instead of
+// silently drifting from what pino actually accepts.
+const LOG_LEVELS = [
+  'fatal',
+  'error',
+  'warn',
+  'info',
+  'debug',
+  'trace',
+] as const satisfies readonly PinoLevel[]
 
 export type LogLevel = (typeof LOG_LEVELS)[number]
 
