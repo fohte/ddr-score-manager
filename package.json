@@ -1,0 +1,32 @@
+{
+  "name": "ddr-score-manager",
+  "private": true,
+  "workspaces": [
+    "server",
+    "web",
+    "parser",
+    "bookmarklet"
+  ],
+  "packageManager": "pnpm@11.9.0",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format:eslint": "eslint --fix .",
+    "format:prettier": "prettier --write .",
+    "format": "conc -m 1 pnpm:format:eslint pnpm:format:prettier",
+    "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "21.2.0",
+    "@eslint/eslintrc": "3.3.5",
+    "@fohte/eslint-config": "0.3.6",
+    "@tsconfig/node-lts": "24.0.0",
+    "@tsconfig/strictest": "2.0.8",
+    "@types/node": "24.13.2",
+    "concurrently": "10.0.3",
+    "eslint": "10.6.0",
+    "prettier": "3.9.4",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  }
+}
