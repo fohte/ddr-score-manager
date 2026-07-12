@@ -2,13 +2,18 @@
   "name": "server",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
   "scripts": {
+    "dev": "tsx watch src/index.ts",
     "test": "conc pnpm:test:type pnpm:test:unit",
     "test:type": "tsc --noEmit",
     "test:unit": "vitest run"
   },
   "dependencies": {
     "@fohte/service-kit": "0.1.4",
+    "@hono/node-server": "2.0.8",
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/auto-instrumentations-node": "0.77.0",
     "@opentelemetry/exporter-trace-otlp-proto": "0.219.0",
@@ -17,6 +22,11 @@
     "@opentelemetry/sdk-trace-base": "2.8.0",
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@sentry/node": "10.63.0",
-    "@sentry/opentelemetry": "10.63.0"
+    "@sentry/opentelemetry": "10.63.0",
+    "hono": "4.12.27",
+    "pino": "10.3.1"
+  },
+  "devDependencies": {
+    "tsx": "4.23.0"
   }
 }
