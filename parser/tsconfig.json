@@ -8,6 +8,16 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "noEmit": true,
+    // DOM 標準 API (Document, Element 等) の型のみが必要なため、
+    // @tsconfig/node-lts の lib に DOM を追加する。
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator",
+      "ESNext.Promise",
+      "DOM"
+    ],
     "paths": {
       "@/*": ["./src/*"]
     }

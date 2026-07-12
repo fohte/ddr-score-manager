@@ -3,3 +3,6 @@ CHANGELOG.md
 
 # Lock files
 pnpm-lock.yaml
+
+# ddr-scraper から流用したテストフィクスチャ (実データとの差分比較のため原本のまま保持する)
+parser/testdata/
