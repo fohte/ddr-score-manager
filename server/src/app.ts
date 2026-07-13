@@ -7,6 +7,11 @@ import type { Logger } from 'pino'
 
 export interface AppDeps {
   logger: Logger
+  // A function rather than a `Sql` client directly: `AppType` below is
+  // consumed cross-package for Hono RPC typing, and importing `@/db` here
+  // would drag its module graph into consumers that don't share this
+  // package's `@/*` path alias.
+  checkDb: () => Promise<void>
 }
 
 // Resolved from this file's own location (not CWD) so static assets are
@@ -44,6 +49,18 @@ export const createApp = (deps: AppDeps) => {
   const routes = app.get('/api/health', (c) =>
     c.json({ status: 'ok' } as const),
   )
+
+  // Not part of the typed RPC surface: a plain readiness probe for
+  // orchestrators, not an API endpoint consumed by the web client.
+  app.get('/healthz', async (c) => {
+    try {
+      await deps.checkDb()
+      return c.json({ status: 'ok' } as const)
+    } catch (err) {
+      deps.logger.error({ err }, 'database ping failed')
+      return c.json({ status: 'error' } as const, 503)
+    }
+  })
 
   app.use('/*', serveStatic({ root: STATIC_ROOT }))
   app.all('/api/*', (c) => c.json({ error: 'Not Found' }, 404))

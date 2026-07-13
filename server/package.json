@@ -9,9 +9,13 @@
     "dev": "tsx watch src/index.ts",
     "test": "conc pnpm:test:type pnpm:test:unit",
     "test:type": "tsc --noEmit",
-    "test:unit": "vitest run"
+    "test:unit": "vitest run",
+    "auth:generate": "DATABASE_URL=postgresql://localhost:5432/placeholder better-auth generate --config ./src/auth.ts --output ./src/db/schema/auth.ts --yes",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@better-auth/api-key": "1.6.23",
     "@fohte/service-kit": "0.1.4",
     "@hono/node-server": "2.0.8",
     "@opentelemetry/api": "1.9.1",
@@ -23,10 +27,15 @@
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@sentry/node": "10.63.0",
     "@sentry/opentelemetry": "10.63.0",
+    "better-auth": "1.6.23",
+    "drizzle-orm": "0.45.2",
     "hono": "4.12.27",
-    "pino": "10.3.1"
+    "pino": "10.3.1",
+    "postgres": "3.4.9"
   },
   "devDependencies": {
+    "@testcontainers/postgresql": "12.0.4",
+    "drizzle-kit": "0.31.10",
     "tsx": "4.23.0"
   }
 }
