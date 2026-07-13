@@ -181,7 +181,20 @@ jobs:
 
       # Install only the matrix package and its workspace dependencies, not the
       # whole workspace, so each parallel leg skips unrelated packages' installs.
-      - run: pnpm install --filter ./${{ matrix.package }}... --frozen-lockfile
+      #
+      # web imports server's route types (`AppType`) as a type-only import, but
+      # server's package.json `exports` points at raw TypeScript source, so tsc
+      # still resolves every module server/src/app.ts imports (hono, pino,
+      # @hono/node-server). pnpm's `--filter web...` does not reliably install a
+      # linked workspace dependency's own external dependencies
+      # (pnpm/pnpm#4493), so pull server in explicitly here.
+      - name: Install dependencies
+        run: |
+          filters=(--filter "./${{ matrix.package }}...")
+          if [ "${{ matrix.package }}" = "web" ]; then
+            filters+=(--filter "./server...")
+          fi
+          pnpm install "${filters[@]}" --frozen-lockfile
 
       - name: Run tests
         working-directory: ${{ matrix.package }}
