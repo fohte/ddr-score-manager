@@ -6,5 +6,11 @@
     "test": "conc pnpm:test:type pnpm:test:unit",
     "test:type": "tsc --noEmit",
     "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.12"
   }
 }
