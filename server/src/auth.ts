@@ -1,5 +1,5 @@
 import { apiKey } from '@better-auth/api-key'
-import { betterAuth } from 'better-auth'
+import { type Auth, betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 
@@ -9,7 +9,7 @@ const databaseUrl = process.env['DATABASE_URL'] ?? PLACEHOLDER_DATABASE_URL
 
 const db = drizzle(createSql(databaseUrl))
 
-export const auth = betterAuth({
+const authOptions: BetterAuthOptions = {
   database: drizzleAdapter(db, { provider: 'pg' }),
   socialProviders: {
     google: {
@@ -18,4 +18,6 @@ export const auth = betterAuth({
     },
   },
   plugins: [apiKey()],
-})
+}
+
+export const auth: Auth = betterAuth(authOptions)
