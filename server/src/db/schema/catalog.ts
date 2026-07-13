@@ -32,7 +32,8 @@ export const musics = pgTable(
       .default(sql`now()`),
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
       .notNull()
-      .default(sql`now()`),
+      .default(sql`now()`)
+      .$onUpdate(() => new Date()),
   },
   (table) => [
     check('musics_id_alnum', sql`${table.id} ~ '^[A-Za-z0-9]{1,64}$'`),
