@@ -35,6 +35,11 @@ export interface ParseError {
   detail: string
 }
 
+export const invalidStructure = (detail: string): ParseError => ({
+  reason: 'invalid_structure',
+  detail,
+})
+
 export interface EamusementParser {
   parsePage(doc: Document): Result<ParsedPage, ParseError>
 }

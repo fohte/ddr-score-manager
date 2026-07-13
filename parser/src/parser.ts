@@ -8,7 +8,7 @@ import {
   parseScoreListRows,
   SCORE_LIST_TABLE_SELECTOR,
 } from '@/scoreListParser'
-import type { ParsedPage, ParseError, Result } from '@/types'
+import type { EamusementParser, ParsedPage, ParseError, Result } from '@/types'
 import { err, ok } from '@/types'
 
 const detectAndParse = (doc: Document): Result<ParsedPage, ParseError> => {
@@ -35,15 +35,18 @@ const detectAndParse = (doc: Document): Result<ParsedPage, ParseError> => {
 
 // e-amusement のスコア一覧・楽曲詳細 HTML から構造化データを抽出する。
 // ページ種別は DOM 構造から自動判別し、抽出値は zod スキーマで最終検証してから返す。
-export const parsePage = (doc: Document): Result<ParsedPage, ParseError> => {
+export const parsePage: EamusementParser['parsePage'] = (doc) => {
   const page = detectAndParse(doc)
   if (!page.ok) return page
 
   const validated = parsedPageSchema.safeParse(page.value)
   if (!validated.success) {
+    const issues = validated.error.issues
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+      .join('; ')
     return err({
       reason: 'invalid_structure',
-      detail: `schema validation failed: ${validated.error.message}`,
+      detail: `schema validation failed: ${issues}`,
     })
   }
 

@@ -7,7 +7,7 @@ import {
   mapRank,
 } from '@/enumMappings'
 import type { ParsedScoreRow, ParseError, PlayStyle, Result } from '@/types'
-import { err, ok } from '@/types'
+import { err, invalidStructure, ok } from '@/types'
 import { getQueryParam } from '@/url'
 
 export const SCORE_LIST_TABLE_SELECTOR = 'table#data_tbl'
@@ -17,11 +17,6 @@ interface RowIdentity {
   musicTitle: string
   playStyle: PlayStyle
 }
-
-const invalidStructure = (detail: string): ParseError => ({
-  reason: 'invalid_structure',
-  detail,
-})
 
 const parseRowIdentity = (tr: Element): Result<RowIdentity, ParseError> => {
   const anchor = tr.querySelector('td:first-child a.music_info')
@@ -53,6 +48,28 @@ const parseRowIdentity = (tr: Element): Result<RowIdentity, ParseError> => {
   return ok({ musicId, musicTitle, playStyle })
 }
 
+// rank / clearType / flareRank は「img の src → basename → enum マッピング」という
+// 同一形状の抽出を行うため、セレクタとマッパーだけを差し替えて共通化する。
+const extractMappedImageValue = <T>(
+  td: Element,
+  selector: string,
+  mapper: (basename: string) => T | undefined,
+  label: string,
+  context: string,
+): Result<T, ParseError> => {
+  const src = td.querySelector(selector)?.getAttribute('src')
+  if (src === null || src === undefined) {
+    return err(invalidStructure(`${label} image not found: ${context}`))
+  }
+
+  const value = mapper(basenameFromSrc(src))
+  if (value === undefined) {
+    return err(invalidStructure(`unknown ${label} image: ${src}`))
+  }
+
+  return ok(value)
+}
+
 // 戻り値が null の場合は未プレイ (スコアなし) のため、行を生成しない。
 const parseScoreCell = (
   td: Element,
@@ -76,10 +93,11 @@ const parseScoreCell = (
 
   const scoreText = td.querySelector('div.data_score')?.textContent.trim() ?? ''
   // 未プレイの譜面は "---" (プレイ済み譜面が存在しない場合は空文字) で表示される。
+  // これらは数字のみの文字列にならないため、以下のチェックだけで判別できる
+  // (スコア 0 のプレイ済み譜面と区別するため、数値としての 0 判定は行わない)。
   if (!/^\d+$/.test(scoreText)) return ok(null)
 
   const score = Number(scoreText)
-  if (score === 0) return ok(null)
   if (score > 1_000_000) {
     return err(
       invalidStructure(
@@ -88,48 +106,34 @@ const parseScoreCell = (
     )
   }
 
-  const rankSrc = td.querySelector('div.data_rank img')?.getAttribute('src')
-  if (rankSrc === null || rankSrc === undefined) {
-    return err(
-      invalidStructure(
-        `rank image not found: ${identity.musicTitle} ${difficulty}`,
-      ),
-    )
-  }
-  const rank = mapRank(basenameFromSrc(rankSrc))
-  if (rank === undefined) {
-    return err(invalidStructure(`unknown rank image: ${rankSrc}`))
-  }
+  const context = `${identity.musicTitle} ${difficulty}`
 
-  const clearSrc = td
-    .querySelector('div.data_clearkind img')
-    ?.getAttribute('src')
-  if (clearSrc === null || clearSrc === undefined) {
-    return err(
-      invalidStructure(
-        `clear type image not found: ${identity.musicTitle} ${difficulty}`,
-      ),
-    )
-  }
-  const clearType = mapClearType(basenameFromSrc(clearSrc))
-  if (clearType === undefined) {
-    return err(invalidStructure(`unknown clear type image: ${clearSrc}`))
-  }
+  const rankResult = extractMappedImageValue(
+    td,
+    'div.data_rank img',
+    mapRank,
+    'rank',
+    context,
+  )
+  if (!rankResult.ok) return rankResult
 
-  const flareSrc = td
-    .querySelector('div.data_flarerank img')
-    ?.getAttribute('src')
-  if (flareSrc === null || flareSrc === undefined) {
-    return err(
-      invalidStructure(
-        `flare rank image not found: ${identity.musicTitle} ${difficulty}`,
-      ),
-    )
-  }
-  const flareRank = mapFlareRank(basenameFromSrc(flareSrc))
-  if (flareRank === undefined) {
-    return err(invalidStructure(`unknown flare rank image: ${flareSrc}`))
-  }
+  const clearTypeResult = extractMappedImageValue(
+    td,
+    'div.data_clearkind img',
+    mapClearType,
+    'clear type',
+    context,
+  )
+  if (!clearTypeResult.ok) return clearTypeResult
+
+  const flareRankResult = extractMappedImageValue(
+    td,
+    'div.data_flarerank img',
+    mapFlareRank,
+    'flare rank',
+    context,
+  )
+  if (!flareRankResult.ok) return flareRankResult
 
   return ok({
     musicId: identity.musicId,
@@ -137,9 +141,9 @@ const parseScoreCell = (
     playStyle: identity.playStyle,
     difficulty,
     score,
-    rank,
-    clearType,
-    flareRank,
+    rank: rankResult.value,
+    clearType: clearTypeResult.value,
+    flareRank: flareRankResult.value,
   })
 }
 
