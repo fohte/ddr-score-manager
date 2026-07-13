@@ -23,7 +23,7 @@
     "@opentelemetry/semantic-conventions": "1.41.1",
     "@sentry/node": "10.63.0",
     "@sentry/opentelemetry": "10.63.0",
-    "hono": "4.12.27",
+    "hono": "4.12.28",
     "pino": "10.3.1"
   },
   "devDependencies": {
