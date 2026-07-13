@@ -1,12 +1,12 @@
 import { describe, expect, inject, it, vi } from 'vitest'
 
 import { createApp } from '@/app'
-import { createSql, pingDb } from '@/db'
+import { createSql, pingDb, PLACEHOLDER_DATABASE_URL } from '@/db'
 import { createLogger } from '@/logger'
 
 // Never queried by the tests below, so postgres.js's lazy connection never
 // actually dials this placeholder.
-const sql = createSql('postgresql://localhost:5432/placeholder')
+const sql = createSql(PLACEHOLDER_DATABASE_URL)
 
 const app = createApp({
   logger: createLogger('fatal'),

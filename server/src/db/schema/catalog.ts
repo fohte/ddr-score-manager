@@ -102,6 +102,7 @@ export const musicSubmissions = pgTable(
       columns: [table.musicId],
       foreignColumns: [musics.id],
     }),
+    // No ON DELETE cascade: see the same note on score_records_user_id_fk.
     foreignKey({
       name: 'music_submissions_user_id_fk',
       columns: [table.userId],
@@ -135,6 +136,7 @@ export const chartSubmissions = pgTable(
         musicCharts.difficulty,
       ],
     }),
+    // No ON DELETE cascade: see the same note on score_records_user_id_fk.
     foreignKey({
       name: 'chart_submissions_user_id_fk',
       columns: [table.userId],

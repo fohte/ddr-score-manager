@@ -1,5 +1,5 @@
 {
-  "id": "9d62fdbd-e05e-4143-a259-dd027fc8f157",
+  "id": "8b0bcd44-8c0b-44a2-83da-a4c9779e2f21",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -978,6 +978,33 @@
               "expression": "id",
               "isExpression": false,
               "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "score_records_chart_idx": {
+          "name": "score_records_chart_idx",
+          "columns": [
+            {
+              "expression": "music_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "play_style",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "difficulty",
+              "isExpression": false,
+              "asc": true,
               "nulls": "last"
             }
           ],

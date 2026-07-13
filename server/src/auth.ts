@@ -3,12 +3,9 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { drizzle } from 'drizzle-orm/postgres-js'
 
-import { createSql } from '@/db'
+import { createSql, PLACEHOLDER_DATABASE_URL } from '@/db'
 
-// `better-auth generate` and `drizzle-kit generate` only diff schema and
-// never open a connection, so this works fine against a placeholder URL.
-const databaseUrl =
-  process.env['DATABASE_URL'] ?? 'postgresql://localhost:5432/placeholder'
+const databaseUrl = process.env['DATABASE_URL'] ?? PLACEHOLDER_DATABASE_URL
 
 const db = drizzle(createSql(databaseUrl))
 

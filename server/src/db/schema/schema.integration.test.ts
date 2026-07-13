@@ -6,12 +6,27 @@ import { setupTx } from '@/db/test/db'
 const CHECK_VIOLATION = '23514'
 const FOREIGN_KEY_VIOLATION = '23503'
 
-const pgErrorCode = async (query: Promise<unknown>): Promise<string> => {
+interface PgError {
+  code: string
+  constraint: string | undefined
+}
+
+// Returns both the SQLSTATE class and the specific constraint name, so a
+// test asserts exactly which constraint fired instead of merely that some
+// check/FK constraint did.
+const pgError = async (query: Promise<unknown>): Promise<PgError> => {
   try {
     await query
   } catch (err) {
     if (err !== null && typeof err === 'object' && 'code' in err) {
-      return String(err.code)
+      const { code, constraint_name: constraint } = err as {
+        code: unknown
+        constraint_name?: unknown
+      }
+      return {
+        code: String(code),
+        constraint: typeof constraint === 'string' ? constraint : undefined,
+      }
     }
     throw err
   }
@@ -45,8 +60,11 @@ describe('schema constraints', () => {
   }
 
   describe('musics', () => {
-    it('accepts a valid row', async () => {
-      await expect(insertMusic('abc123')).resolves.not.toThrow()
+    it.each([
+      ['a typical id', 'abc123'],
+      ['an id at the 64 character limit', 'a'.repeat(64)],
+    ])('accepts %s', async (_desc, id) => {
+      await expect(insertMusic(id)).resolves.not.toThrow()
     })
 
     it.each([
@@ -54,16 +72,19 @@ describe('schema constraints', () => {
       ['exceeds 64 characters', 'a'.repeat(65)],
       ['is empty', ''],
     ])('rejects an id that %s', async (_desc, id) => {
-      expect(await pgErrorCode(insertMusic(id))).toBe(CHECK_VIOLATION)
+      expect(await pgError(insertMusic(id))).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'musics_id_alnum',
+      })
     })
 
     it('rejects an invalid status', async () => {
       const tx = getTx()
       expect(
-        await pgErrorCode(
+        await pgError(
           tx`INSERT INTO musics (id, title, status) VALUES (${'abc123'}, ${'t'}, ${'invalid'})`,
         ),
-      ).toBe(CHECK_VIOLATION)
+      ).toEqual({ code: CHECK_VIOLATION, constraint: 'musics_status_valid' })
     })
   })
 
@@ -75,34 +96,45 @@ describe('schema constraints', () => {
 
     it('rejects an invalid play_style', async () => {
       await insertMusic('abc123')
-      expect(await pgErrorCode(insertChart('abc123', 'invalid'))).toBe(
-        CHECK_VIOLATION,
-      )
+      expect(await pgError(insertChart('abc123', 'invalid'))).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'music_charts_play_style_valid',
+      })
     })
 
     it('rejects an invalid difficulty', async () => {
       await insertMusic('abc123')
-      expect(await pgErrorCode(insertChart('abc123', 'sp', 'invalid'))).toBe(
-        CHECK_VIOLATION,
-      )
+      expect(await pgError(insertChart('abc123', 'sp', 'invalid'))).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'music_charts_difficulty_valid',
+      })
     })
 
     it('rejects an invalid status', async () => {
       await insertMusic('abc123')
       const tx = getTx()
       expect(
-        await pgErrorCode(
+        await pgError(
           tx`INSERT INTO music_charts (music_id, play_style, difficulty, status) VALUES (${'abc123'}, ${'sp'}, ${'basic'}, ${'invalid'})`,
         ),
-      ).toBe(CHECK_VIOLATION)
+      ).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'music_charts_status_valid',
+      })
     })
 
-    it('accepts a null level', async () => {
-      await insertMusic('abc123')
+    const insertWithLevel = (level: number | null) => {
       const tx = getTx()
-      await expect(
-        tx`INSERT INTO music_charts (music_id, play_style, difficulty, level, status) VALUES (${'abc123'}, ${'sp'}, ${'basic'}, ${null}, ${'approved'})`,
-      ).resolves.not.toThrow()
+      return tx`INSERT INTO music_charts (music_id, play_style, difficulty, level, status) VALUES (${'abc123'}, ${'sp'}, ${'basic'}, ${level}, ${'approved'})`
+    }
+
+    it.each([
+      ['null', null],
+      ['the minimum', 1],
+      ['the maximum', 19],
+    ])('accepts a level of %s', async (_desc, level) => {
+      await insertMusic('abc123')
+      await expect(insertWithLevel(level)).resolves.not.toThrow()
     })
 
     it.each([
@@ -110,74 +142,107 @@ describe('schema constraints', () => {
       ['above the maximum', 20],
     ])('rejects a level %s', async (_desc, level) => {
       await insertMusic('abc123')
-      const tx = getTx()
-      expect(
-        await pgErrorCode(
-          tx`INSERT INTO music_charts (music_id, play_style, difficulty, level, status) VALUES (${'abc123'}, ${'sp'}, ${'basic'}, ${level}, ${'approved'})`,
-        ),
-      ).toBe(CHECK_VIOLATION)
+      expect(await pgError(insertWithLevel(level))).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'music_charts_level_range',
+      })
     })
 
     it('rejects a music_id with no matching musics row', async () => {
-      expect(await pgErrorCode(insertChart('missing'))).toBe(
-        FOREIGN_KEY_VIOLATION,
-      )
+      expect(await pgError(insertChart('missing'))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'music_charts_music_id_fk',
+      })
     })
   })
 
   describe('music_submissions', () => {
+    const insertSubmission = (musicId: string, userId: string) => {
+      const tx = getTx()
+      return tx`INSERT INTO music_submissions (music_id, user_id, title_normalized) VALUES (${musicId}, ${userId}, ${'test'})`
+    }
+
+    it('accepts a valid row', async () => {
+      await insertUser('user1')
+      await insertMusic('abc123', 'pending')
+      await expect(insertSubmission('abc123', 'user1')).resolves.not.toThrow()
+    })
+
     it('rejects a music_id with no matching musics row', async () => {
       await insertUser('user1')
-      const tx = getTx()
-      expect(
-        await pgErrorCode(
-          tx`INSERT INTO music_submissions (music_id, user_id, title_normalized) VALUES (${'missing'}, ${'user1'}, ${'test'})`,
-        ),
-      ).toBe(FOREIGN_KEY_VIOLATION)
+      expect(await pgError(insertSubmission('missing', 'user1'))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'music_submissions_music_id_fk',
+      })
     })
 
     it('rejects a user_id with no matching user row', async () => {
       await insertMusic('abc123', 'pending')
-      const tx = getTx()
-      expect(
-        await pgErrorCode(
-          tx`INSERT INTO music_submissions (music_id, user_id, title_normalized) VALUES (${'abc123'}, ${'missing'}, ${'test'})`,
-        ),
-      ).toBe(FOREIGN_KEY_VIOLATION)
+      expect(await pgError(insertSubmission('abc123', 'missing'))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'music_submissions_user_id_fk',
+      })
     })
   })
 
   describe('chart_submissions', () => {
+    const insertSubmission = (
+      musicId: string,
+      playStyle: string,
+      difficulty: string,
+      userId: string,
+    ) => {
+      const tx = getTx()
+      return tx`INSERT INTO chart_submissions (music_id, play_style, difficulty, user_id) VALUES (${musicId}, ${playStyle}, ${difficulty}, ${userId})`
+    }
+
+    it('accepts a valid row', async () => {
+      await insertUser('user1')
+      await insertMusic('abc123', 'pending')
+      await insertChart('abc123', 'sp', 'basic', 'pending')
+      await expect(
+        insertSubmission('abc123', 'sp', 'basic', 'user1'),
+      ).resolves.not.toThrow()
+    })
+
     it('rejects a chart with no matching music_charts row', async () => {
       await insertUser('user1')
-      const tx = getTx()
       expect(
-        await pgErrorCode(
-          tx`INSERT INTO chart_submissions (music_id, play_style, difficulty, user_id) VALUES (${'missing'}, ${'sp'}, ${'basic'}, ${'user1'})`,
-        ),
-      ).toBe(FOREIGN_KEY_VIOLATION)
+        await pgError(insertSubmission('missing', 'sp', 'basic', 'user1')),
+      ).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'chart_submissions_chart_fk',
+      })
     })
 
     it('rejects a user_id with no matching user row', async () => {
       await insertMusic('abc123', 'pending')
       await insertChart('abc123', 'sp', 'basic', 'pending')
-      const tx = getTx()
       expect(
-        await pgErrorCode(
-          tx`INSERT INTO chart_submissions (music_id, play_style, difficulty, user_id) VALUES (${'abc123'}, ${'sp'}, ${'basic'}, ${'missing'})`,
-        ),
-      ).toBe(FOREIGN_KEY_VIOLATION)
+        await pgError(insertSubmission('abc123', 'sp', 'basic', 'missing')),
+      ).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'chart_submissions_user_id_fk',
+      })
     })
   })
 
   describe('music_jackets', () => {
-    it('rejects a music_id with no matching musics row', async () => {
+    const insertJacket = (musicId: string) => {
       const tx = getTx()
-      expect(
-        await pgErrorCode(
-          tx`INSERT INTO music_jackets (music_id, content, content_type) VALUES (${'missing'}, ${Buffer.from('x')}, ${'image/jpeg'})`,
-        ),
-      ).toBe(FOREIGN_KEY_VIOLATION)
+      return tx`INSERT INTO music_jackets (music_id, content, content_type) VALUES (${musicId}, ${Buffer.from('x')}, ${'image/jpeg'})`
+    }
+
+    it('accepts a valid row', async () => {
+      await insertMusic('abc123')
+      await expect(insertJacket('abc123')).resolves.not.toThrow()
+    })
+
+    it('rejects a music_id with no matching musics row', async () => {
+      expect(await pgError(insertJacket('missing'))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'music_jackets_music_id_fk',
+      })
     })
   })
 
@@ -204,22 +269,27 @@ describe('schema constraints', () => {
       await insertUser('user1')
       await insertMusic('abc123')
       await insertChart('abc123')
-      expect(await pgErrorCode(insertScore(score))).toBe(CHECK_VIOLATION)
+      expect(await pgError(insertScore(score))).toEqual({
+        code: CHECK_VIOLATION,
+        constraint: 'score_records_score_range',
+      })
     })
 
     it('rejects a user_id with no matching user row', async () => {
       await insertMusic('abc123')
       await insertChart('abc123')
-      expect(await pgErrorCode(insertScore(900_000))).toBe(
-        FOREIGN_KEY_VIOLATION,
-      )
+      expect(await pgError(insertScore(900_000))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'score_records_user_id_fk',
+      })
     })
 
     it('rejects a chart with no matching music_charts row', async () => {
       await insertUser('user1')
-      expect(await pgErrorCode(insertScore(900_000))).toBe(
-        FOREIGN_KEY_VIOLATION,
-      )
+      expect(await pgError(insertScore(900_000))).toEqual({
+        code: FOREIGN_KEY_VIOLATION,
+        constraint: 'score_records_chart_fk',
+      })
     })
   })
 })

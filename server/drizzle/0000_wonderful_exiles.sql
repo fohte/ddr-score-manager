@@ -151,4 +151,5 @@ CREATE INDEX "apikey_referenceId_idx" ON "apikey" USING btree ("reference_id");-
 CREATE INDEX "apikey_key_idx" ON "apikey" USING btree ("key");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");--> statement-breakpoint
-CREATE INDEX "score_records_lookup_idx" ON "score_records" USING btree ("user_id","music_id","play_style","difficulty","id" DESC NULLS LAST);
+CREATE INDEX "score_records_lookup_idx" ON "score_records" USING btree ("user_id","music_id","play_style","difficulty","id" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "score_records_chart_idx" ON "score_records" USING btree ("music_id","play_style","difficulty");

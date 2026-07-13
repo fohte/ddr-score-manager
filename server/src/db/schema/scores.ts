@@ -24,6 +24,9 @@ export const scoreRecords = pgTable(
     playStyle: text('play_style').notNull(),
     difficulty: text('difficulty').notNull(),
     score: integer('score').notNull(),
+    // rank/clearType/flareRank have no CHECK: e-amusement's value sets for
+    // these (unlike playStyle/difficulty) aren't a fixed, exhaustively known
+    // enum across game versions.
     rank: text('rank').notNull(),
     clearType: text('clear_type'),
     flareRank: text('flare_rank'),
@@ -32,6 +35,9 @@ export const scoreRecords = pgTable(
       .default(sql`now()`),
   },
   (table) => [
+    // No ON DELETE cascade: unlike better-auth's own session/account tables,
+    // score history is never implicitly deleted alongside a user — removing
+    // it must be an explicit, separate decision.
     foreignKey({
       name: 'score_records_user_id_fk',
       columns: [table.userId],
@@ -46,14 +52,22 @@ export const scoreRecords = pgTable(
         musicCharts.difficulty,
       ],
     }),
-    // Backs both "latest score per chart" (DISTINCT ON) and per-music history
-    // queries; see design/data-models.md.
+    // Backs both "latest score per chart" (DISTINCT ON on this prefix) and
+    // per-music score history queries.
     index('score_records_lookup_idx').on(
       table.userId,
       table.musicId,
       table.playStyle,
       table.difficulty,
       table.id.desc(),
+    ),
+    // Supports the chart FK above: Postgres doesn't auto-index FK columns,
+    // and this one isn't covered by the lookup index's prefix (userId is
+    // its leftmost column).
+    index('score_records_chart_idx').on(
+      table.musicId,
+      table.playStyle,
+      table.difficulty,
     ),
     check(
       'score_records_score_range',
