@@ -181,7 +181,41 @@ jobs:
 
       # Install only the matrix package and its workspace dependencies, not the
       # whole workspace, so each parallel leg skips unrelated packages' installs.
-      - run: pnpm install --filter ./${{ matrix.package }}... --frozen-lockfile
+      #
+      # A package's tsc --build also compiles any TypeScript project references
+      # declared in its tsconfig.json, so the referenced packages' own external
+      # dependencies must be installed too. pnpm's `--filter <pkg>...` does not
+      # reliably install a linked workspace dependency's own dependencies
+      # (pnpm/pnpm#4493), so walk the tsconfig.json `references` graph
+      # (transitively, since a reference may itself reference another package)
+      # and add each referenced package's own filter.
+      - name: Install dependencies
+        run: |
+          filters=(--filter "./${{ matrix.package }}...")
+          seen=("${{ matrix.package }}")
+          queue=("${{ matrix.package }}")
+          while [ "${#queue[@]}" -gt 0 ]; do
+            dir=${queue[0]}
+            queue=("${queue[@]:1}")
+            # tsconfig.json is JSONC; strip `//` comments so jq can parse it.
+            refs=$(sed -E 's#//.*$##' "$dir/tsconfig.json" | jq -r '.references[]?.path // empty')
+            for ref in $refs; do
+              # `path` may point at a tsconfig file or at a directory (implying
+              # its tsconfig.json), per TypeScript's project references spec.
+              if [[ "$ref" == *.json ]]; then
+                ref_target="$dir/$(dirname "$ref")"
+              else
+                ref_target="$dir/$ref"
+              fi
+              ref_dir=$(realpath --relative-to=. "$ref_target")
+              if [[ ! " ${seen[*]} " == *" $ref_dir "* ]]; then
+                seen+=("$ref_dir")
+                queue+=("$ref_dir")
+                filters+=(--filter "./${ref_dir}...")
+              fi
+            done
+          done
+          pnpm install "${filters[@]}" --frozen-lockfile
 
       - name: Run tests
         working-directory: ${{ matrix.package }}
