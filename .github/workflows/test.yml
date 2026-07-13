@@ -182,18 +182,22 @@ jobs:
       # Install only the matrix package and its workspace dependencies, not the
       # whole workspace, so each parallel leg skips unrelated packages' installs.
       #
-      # web imports server's route types (`AppType`) as a type-only import, but
-      # server's package.json `exports` points at raw TypeScript source, so tsc
-      # still resolves every module server/src/app.ts imports (hono, pino,
-      # @hono/node-server). pnpm's `--filter web...` does not reliably install a
-      # linked workspace dependency's own external dependencies
-      # (pnpm/pnpm#4493), so pull server in explicitly here.
+      # A package's tsc --build also compiles any TypeScript project references
+      # declared in its tsconfig.json, so the referenced packages' own external
+      # dependencies must be installed too. pnpm's `--filter <pkg>...` does not
+      # reliably install a linked workspace dependency's own dependencies
+      # (pnpm/pnpm#4493), so add each referenced package's own filter here,
+      # derived from tsconfig.json rather than hard-coded per package.
       - name: Install dependencies
         run: |
           filters=(--filter "./${{ matrix.package }}...")
-          if [ "${{ matrix.package }}" = "web" ]; then
-            filters+=(--filter "./server...")
-          fi
+          # tsconfig.json is JSONC; strip whole-line `//` comments so jq can parse it.
+          refs=$(sed -E '/^[[:space:]]*\/\//d' "${{ matrix.package }}/tsconfig.json" |
+            jq -r '.references[]?.path // empty')
+          for ref in $refs; do
+            ref_dir=$(realpath --relative-to=. "${{ matrix.package }}/$(dirname "$ref")")
+            filters+=(--filter "./${ref_dir}...")
+          done
           pnpm install "${filters[@]}" --frozen-lockfile
 
       - name: Run tests
