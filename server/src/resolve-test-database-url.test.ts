@@ -58,6 +58,17 @@ describe('resolveTestDatabaseUrl', () => {
     )
   })
 
+  it('preserves an explicit DATABASE_URL whose query string merely contains the dev path', () => {
+    expect(
+      resolveTestDatabaseUrl(
+        'postgresql://ddr_score_manager:ddr_score_manager@localhost:1/custom_db?comment=/ddr_score_manager_dev',
+        'postgresql://ddr_score_manager:ddr_score_manager@localhost:1/ddr_score_manager_test',
+      ),
+    ).toBe(
+      'postgresql://ddr_score_manager:ddr_score_manager@localhost:1/custom_db?comment=/ddr_score_manager_dev',
+    )
+  })
+
   it('uses TEST_DATABASE_URL when the current value points at ddr_score_manager_dev with a query string', () => {
     expect(
       resolveTestDatabaseUrl(

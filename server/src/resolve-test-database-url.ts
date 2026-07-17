@@ -1,13 +1,14 @@
 const DEV_DATABASE_PATH = '/ddr_score_manager_dev'
 
-// A plain `includes` would also match a custom database sharing the
-// `ddr_score_manager_dev` prefix (e.g. `/ddr_score_manager_dev_snapshot`), so
-// require the path to end there or be followed by a query/fragment separator.
+// Parses the URL instead of doing a substring search, so a query/fragment
+// value that happens to contain `/ddr_score_manager_dev` (e.g. a
+// `search_path` option) can't be mistaken for the path itself.
 function pointsAtDevDatabase(url: string): boolean {
-  const index = url.indexOf(DEV_DATABASE_PATH)
-  if (index === -1) return false
-  const after = url.charAt(index + DEV_DATABASE_PATH.length)
-  return after === '' || after === '?' || after === '#'
+  try {
+    return new URL(url).pathname === DEV_DATABASE_PATH
+  } catch {
+    return false
+  }
 }
 
 export function resolveTestDatabaseUrl(
