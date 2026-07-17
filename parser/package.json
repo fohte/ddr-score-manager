@@ -2,6 +2,9 @@
   "name": "parser",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "conc pnpm:test:type pnpm:test:unit",
     "test:type": "tsc --noEmit",

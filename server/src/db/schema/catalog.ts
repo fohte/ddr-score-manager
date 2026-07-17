@@ -9,6 +9,7 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core'
+import type { Difficulty, PlayStyle } from 'parser'
 
 import { user } from '@/db/schema/auth'
 
@@ -48,8 +49,8 @@ export const musicCharts = pgTable(
   'music_charts',
   {
     musicId: text('music_id').notNull(),
-    playStyle: text('play_style').notNull(),
-    difficulty: text('difficulty').notNull(),
+    playStyle: text('play_style').notNull().$type<PlayStyle>(),
+    difficulty: text('difficulty').notNull().$type<Difficulty>(),
     level: smallint('level'),
     status: text('status').notNull(),
     approvedAt: timestamp('approved_at', {
@@ -116,8 +117,8 @@ export const chartSubmissions = pgTable(
   'chart_submissions',
   {
     musicId: text('music_id').notNull(),
-    playStyle: text('play_style').notNull(),
-    difficulty: text('difficulty').notNull(),
+    playStyle: text('play_style').notNull().$type<PlayStyle>(),
+    difficulty: text('difficulty').notNull().$type<Difficulty>(),
     userId: text('user_id').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
       .notNull()

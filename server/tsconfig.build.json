@@ -8,5 +8,9 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "exclude": ["**/*.cjs", "**/*.test.ts", "dist"]
+  "exclude": ["**/*.cjs", "**/*.test.ts", "dist"],
+  // "references" isn't inherited through "extends", so this must repeat
+  // tsconfig.json's reference to parser: web's own build walks this file
+  // (not tsconfig.json) to reach server's dependencies transitively.
+  "references": [{ "path": "../parser/tsconfig.build.json" }]
 }

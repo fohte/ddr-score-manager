@@ -18,10 +18,13 @@ export interface Env {
   PORT: number
   LOG_LEVEL: LogLevel
   DATABASE_URL: string
+  CATALOG_TRUSTED_EMAILS: string
+  CATALOG_APPROVAL_THRESHOLD: number
 }
 
 const DEFAULT_PORT = 3000
 const DEFAULT_LOG_LEVEL: LogLevel = 'info'
+const DEFAULT_CATALOG_APPROVAL_THRESHOLD = 2
 
 const isLogLevel = (value: string): value is LogLevel =>
   (LOG_LEVELS as readonly string[]).includes(value)
@@ -93,10 +96,25 @@ export const loadEnv = (
     return raw
   }
 
+  const parseCatalogApprovalThreshold = (): number => {
+    const raw = source['CATALOG_APPROVAL_THRESHOLD']
+    if (raw === undefined) return DEFAULT_CATALOG_APPROVAL_THRESHOLD
+    const parsed = Number(raw)
+    if (raw === '' || !Number.isInteger(parsed) || parsed < 2) {
+      issues.push(
+        `CATALOG_APPROVAL_THRESHOLD must be an integer >= 2 (got: ${raw})`,
+      )
+      return DEFAULT_CATALOG_APPROVAL_THRESHOLD
+    }
+    return parsed
+  }
+
   const env: Env = {
     PORT: parsePort(),
     LOG_LEVEL: parseLogLevel(),
     DATABASE_URL: parseDatabaseUrl(),
+    CATALOG_TRUSTED_EMAILS: source['CATALOG_TRUSTED_EMAILS'] ?? '',
+    CATALOG_APPROVAL_THRESHOLD: parseCatalogApprovalThreshold(),
   }
 
   if (issues.length > 0) {
