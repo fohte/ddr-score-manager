@@ -24,7 +24,13 @@ mise はこれを自動的に読み込む。
 
 ### スキーマ変更
 
-`server/src/auth.ts` の better-auth 構成 (プラグイン追加など、認証テーブルに影響する変更) を変えた場合は、先に `pnpm --filter server run auth:generate` でスキーマ (`server/src/db/schema/auth.ts`) を再生成してから `pnpm --filter server run db:generate` でマイグレーションを生成する。
+`server/src/auth.ts` の better-auth 構成 (プラグイン追加など、認証テーブルに影響する変更) を変えた場合は、先にスキーマ (`server/src/db/schema/auth.ts`) を再生成してからマイグレーションを生成する。
+
+```sh
+pnpm --filter server run auth:generate
+pnpm --filter server run db:generate
+```
+
 それ以外のテーブルは `db:generate` を直接実行する。
 
 ### テスト
