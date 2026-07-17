@@ -1,14 +1,14 @@
 import postgres from 'postgres'
-import { afterAll, afterEach, beforeEach, inject } from 'vitest'
+import { afterAll, afterEach, beforeEach } from 'vitest'
 
-// One shared pool for the whole worker, created lazily so importing this
-// module doesn't open a connection before the testcontainers global setup
-// has provided the URL.
+import { requireDatabaseUrl } from '@/env'
+
+// One shared pool for the whole worker.
 let pool: postgres.Sql | null = null
 
 const getPool = (): postgres.Sql => {
   if (pool === null) {
-    pool = postgres(inject('databaseUrl'), { max: 8, onnotice: () => {} })
+    pool = postgres(requireDatabaseUrl(), { max: 8, onnotice: () => {} })
   }
   return pool
 }

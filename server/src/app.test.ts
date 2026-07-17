@@ -1,7 +1,8 @@
-import { describe, expect, inject, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from '@/app'
 import { createSql, pingDb, PLACEHOLDER_DATABASE_URL } from '@/db'
+import { requireDatabaseUrl } from '@/env'
 import { createLogger } from '@/logger'
 
 // Never queried by the tests below, so postgres.js's lazy connection never
@@ -60,7 +61,7 @@ describe('createApp', () => {
 
   describe('/healthz', () => {
     it('returns 200 when the database is reachable', async () => {
-      const reachableSql = createSql(inject('databaseUrl'))
+      const reachableSql = createSql(requireDatabaseUrl())
       const healthyApp = createApp({
         logger: createLogger('fatal'),
         checkDb: () => pingDb(reachableSql),
