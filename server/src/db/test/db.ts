@@ -3,7 +3,8 @@ import { afterAll, afterEach, beforeEach } from 'vitest'
 
 import { requireDatabaseUrl } from '@/env'
 
-// One shared pool for the whole worker.
+// One shared pool for the whole worker, created lazily so importing this
+// module doesn't open a connection for test files that never call setupTx().
 let pool: postgres.Sql | null = null
 
 const getPool = (): postgres.Sql => {
