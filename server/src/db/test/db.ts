@@ -53,13 +53,13 @@ export const setupTx = (): (() => postgres.Sql) => {
   }
 }
 
-// Can't reuse setupTx()'s reserved connection here: Drizzle's postgres-js
-// driver reads client.options.parsers/serializers while constructing a Db,
-// and postgres.js only populates `options` on a connection pool's main
-// client, not on the lightweight object reserve() returns — wrapping a
-// reserved connection crashes. So this opens its own db.transaction() (on
-// the shared pool's main client) and holds it open for the whole test via a
-// rollback signal, giving the same per-test BEGIN/ROLLBACK isolation.
+// ここでは setupTx() の予約接続を再利用できない: Drizzle の postgres-js
+// ドライバは Db 構築時に client.options.parsers/serializers を読むが、
+// postgres.js が options を持つのは接続プールのメインクライアントのみで、
+// reserve() が返す軽量オブジェクトには無い (ラップするとクラッシュする)。
+// そのため、共有プールのメインクライアント上で自前の db.transaction() を
+// 開始し、rollback シグナルでテスト全体にわたって開いたままにすることで、
+// setupTx() と同じテストごとの BEGIN/ROLLBACK 分離を実現する。
 export const setupDrizzleTx = (): (() => Tx) => {
   let currentTx: Tx | null = null
   let signalDone: (() => void) | null = null
@@ -103,10 +103,10 @@ export const setupDrizzleTx = (): (() => Tx) => {
   }
 }
 
-// A real, independently-committing connection for tests that exercise
-// Postgres row-locking across concurrent transactions (setupTx's single
-// reserved connection can't model two transactions racing each other).
-// Callers own the returned close() and must call it in afterAll/afterEach.
+// 複数トランザクションが Postgres の行ロックを競合するケースを検証する
+// テスト用の、実際にコミットする独立接続 (setupTx の単一予約接続では
+// 2 つのトランザクションの競合を再現できない)。
+// 戻り値の close() は呼び出し側が責務を持ち、afterAll/afterEach で呼ぶこと。
 export const createTestDb = (): { db: Db; close: () => Promise<void> } => {
   const sql = createSql(requireDatabaseUrl())
   return { db: createDb(sql), close: () => sql.end({ timeout: 5 }) }

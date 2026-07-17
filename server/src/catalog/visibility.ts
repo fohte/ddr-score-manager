@@ -3,9 +3,9 @@ import { and, eq } from 'drizzle-orm'
 import type { Db, Tx } from '@/db'
 import { musics, musicSubmissions, scoreRecords } from '@/db/schema'
 
-// Shared by ScoreReadApi (music detail 404) and JacketService (jacket 404):
-// a pending music is visible only to a user with their own score or
-// submission attached to it; everyone else must see it as nonexistent.
+// ScoreReadApi (曲別詳細の 404) と JacketService (ジャケットの 404) から共有される:
+// pending の楽曲は、自分のスコアまたは送信記録が紐づくユーザーにのみ可視とし、
+// それ以外のユーザーには存在しないものとして扱う。
 export const isMusicVisibleToUser = async (
   db: Db | Tx,
   musicId: string,

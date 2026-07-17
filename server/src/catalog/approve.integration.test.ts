@@ -3,9 +3,17 @@ import type { Difficulty, PlayStyle } from 'parser'
 import { describe, expect, it } from 'vitest'
 
 import { createCatalogService } from '@/catalog/catalog-service'
-import { insertUser, scoreListPage, scoreRow } from '@/catalog/test/fixtures'
+import {
+  getChart as getChartRow,
+  getMusic as getMusicRow,
+  insertUser,
+  normalizeChart,
+  normalizeMusic,
+  scoreListPage,
+  scoreRow,
+} from '@/catalog/test/fixtures'
 import type { CatalogRegisterInput } from '@/catalog/types'
-import { musicCharts, musics, musicSubmissions } from '@/db/schema'
+import { musicCharts, musicSubmissions } from '@/db/schema'
 import { setupDrizzleTx } from '@/db/test/db'
 
 const APPROVAL_THRESHOLD = 2
@@ -19,31 +27,13 @@ describe('CatalogService.approve / listPending', () => {
     await getDb().transaction((tx) => service().register(tx, input))
   }
 
-  const getMusic = async (musicId: string) => {
-    const [row] = await getDb()
-      .select()
-      .from(musics)
-      .where(eq(musics.id, musicId))
-    return row
-  }
+  const getMusic = (musicId: string) => getMusicRow(getDb(), musicId)
 
-  const getChart = async (
+  const getChart = (
     musicId: string,
     playStyle: PlayStyle,
     difficulty: Difficulty,
-  ) => {
-    const [row] = await getDb()
-      .select()
-      .from(musicCharts)
-      .where(
-        and(
-          eq(musicCharts.musicId, musicId),
-          eq(musicCharts.playStyle, playStyle),
-          eq(musicCharts.difficulty, difficulty),
-        ),
-      )
-    return row
-  }
+  ) => getChartRow(getDb(), musicId, playStyle, difficulty)
 
   describe('approve', () => {
     it('approves a pending music by id and deletes its submissions', async () => {
@@ -58,7 +48,15 @@ describe('CatalogService.approve / listPending', () => {
         approvedMusics: 1,
         approvedCharts: 0,
       })
-      expect((await getMusic('abc123'))?.status).toBe('approved')
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'Test Music',
+        artist: null,
+        status: 'approved',
+        approvedAt: 'SET',
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
       expect(
         await getDb()
           .select()
@@ -95,8 +93,8 @@ describe('CatalogService.approve / listPending', () => {
         trusted: true,
         pages: [scoreListPage([scoreRow()])],
       })
-      // Simulate a chart that's still pending under an already-approved
-      // music (e.g. a later untrusted submission added a new chart).
+      // 既に approved な楽曲の配下で、譜面がまだ pending のままのケースを
+      // シミュレートする (例: 後から非信頼ユーザーが新しい譜面を追加した場合)。
       await getDb()
         .update(musicCharts)
         .set({ status: 'pending', approvedAt: null })
@@ -113,7 +111,14 @@ describe('CatalogService.approve / listPending', () => {
           charts: [{ musicId: 'abc123', playStyle: 'sp', difficulty: 'basic' }],
         }),
       ).toEqual({ approvedMusics: 0, approvedCharts: 1 })
-      expect((await getChart('abc123', 'sp', 'basic'))?.status).toBe('approved')
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: null,
+        status: 'approved',
+        approvedAt: 'SET',
+      })
     })
 
     it('ignores a chart whose parent music is still pending', async () => {
@@ -129,7 +134,14 @@ describe('CatalogService.approve / listPending', () => {
           charts: [{ musicId: 'abc123', playStyle: 'sp', difficulty: 'basic' }],
         }),
       ).toEqual({ approvedMusics: 0, approvedCharts: 0 })
-      expect((await getChart('abc123', 'sp', 'basic'))?.status).toBe('pending')
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: null,
+        status: 'pending',
+        approvedAt: null,
+      })
     })
 
     it('ignores an already-approved chart', async () => {
@@ -153,8 +165,8 @@ describe('CatalogService.approve / listPending', () => {
       await insertUser(getDb(), 'user1')
       await insertUser(getDb(), 'user2')
       await insertUser(getDb(), 'user3')
-      // Titles disagree so the music (and thus its chart) stays pending
-      // across all three submissions.
+      // タイトルが食い違うため、3 人分の送信を通じて楽曲 (およびその譜面) は
+      // pending のままになる。
       await register({
         userId: 'user1',
         trusted: false,

@@ -20,7 +20,7 @@ export type Db = PostgresJsDatabase<typeof schema>
 
 export const createDb = (sql: Sql): Db => drizzle(sql, { schema })
 
-// Derived from Db['transaction'] itself (rather than importing drizzle-orm's
-// PgTransaction type directly) so it always matches the callback argument
-// this Db instance actually produces.
+// drizzle-orm の PgTransaction 型を直接 import せず Db['transaction'] 自体から
+// 導出することで、この Db インスタンスが実際に生成するコールバック引数と
+// 常に一致させる。
 export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]

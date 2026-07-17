@@ -1,7 +1,14 @@
-import type { ParsedMusicDetail, ParsedPage, ParsedScoreRow } from 'parser'
+import { and, eq } from 'drizzle-orm'
+import type {
+  Difficulty,
+  ParsedMusicDetail,
+  ParsedPage,
+  ParsedScoreRow,
+  PlayStyle,
+} from 'parser'
 
 import type { Db, Tx } from '@/db'
-import { musicCharts, musics, user } from '@/db/schema'
+import { musicCharts, musics, scoreRecords, user } from '@/db/schema'
 
 export const scoreRow = (
   overrides: Partial<ParsedScoreRow> = {},
@@ -45,19 +52,63 @@ export const insertUser = async (db: Db | Tx, id: string): Promise<void> => {
     .values({ id, name: 'Test User', email: `${id}@example.com` })
 }
 
-// For tests that commit for real (concurrency tests can't use the
-// rollback-per-test tx fixture, since they need two independently
-// committing connections): a per-run unique, alnum-only id so reruns don't
-// collide with rows a previous run left behind.
+export const insertScoreRecord = async (
+  db: Db | Tx,
+  overrides: Partial<typeof scoreRecords.$inferInsert> & { userId: string },
+): Promise<void> => {
+  await db.insert(scoreRecords).values({
+    musicId: 'abc123',
+    playStyle: 'sp',
+    difficulty: 'basic',
+    score: 900_000,
+    rank: 'AAA',
+    ...overrides,
+  })
+}
+
+// 実際にコミットするテスト用 (同時実行テストは 2 つの独立してコミットする
+// 接続が必要なため、ロールバックするトランザクションフィクスチャを使えない):
+// 実行のたびにユニークな英数字 ID を生成し、前回実行の残存行と衝突しないようにする。
 export const uniqueAlnumId = (prefix: string): string =>
   `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
 
 type MusicRow = typeof musics.$inferSelect
 type ChartRow = typeof musicCharts.$inferSelect
 
-// Timestamps are non-deterministic, so tests compare against a single
-// literal via toEqual (per the repo's test-code rules) by normalizing them
-// to a fixed placeholder first, while still asserting null-vs-set.
+export const getMusic = async (
+  db: Db | Tx,
+  musicId: string,
+): Promise<MusicRow> => {
+  const [row] = await db.select().from(musics).where(eq(musics.id, musicId))
+  if (row === undefined) throw new Error(`music not found: ${musicId}`)
+  return row
+}
+
+export const getChart = async (
+  db: Db | Tx,
+  musicId: string,
+  playStyle: PlayStyle,
+  difficulty: Difficulty,
+): Promise<ChartRow> => {
+  const [row] = await db
+    .select()
+    .from(musicCharts)
+    .where(
+      and(
+        eq(musicCharts.musicId, musicId),
+        eq(musicCharts.playStyle, playStyle),
+        eq(musicCharts.difficulty, difficulty),
+      ),
+    )
+  if (row === undefined) {
+    throw new Error(`chart not found: ${musicId}/${playStyle}/${difficulty}`)
+  }
+  return row
+}
+
+// タイムスタンプは非決定的なので、リポジトリのテストコード規約に従い
+// toEqual で単一のリテラルと比較できるよう、null か否かは保持しつつ
+// 固定のプレースホルダーに正規化する。
 export const normalizeMusic = (
   music: MusicRow,
 ): Omit<MusicRow, 'approvedAt' | 'createdAt' | 'updatedAt'> & {

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { createCatalogService } from '@/catalog/catalog-service'
-import { insertUser, scoreListPage, scoreRow } from '@/catalog/test/fixtures'
+import {
+  insertScoreRecord,
+  insertUser,
+  scoreListPage,
+  scoreRow,
+} from '@/catalog/test/fixtures'
 import type { CatalogRegisterInput } from '@/catalog/types'
 import { isMusicVisibleToUser } from '@/catalog/visibility'
-import { scoreRecords } from '@/db/schema'
 import { setupDrizzleTx } from '@/db/test/db'
 
 const APPROVAL_THRESHOLD = 2
@@ -49,14 +53,7 @@ describe('isMusicVisibleToUser', () => {
       trusted: false,
       pages: [scoreListPage([scoreRow()])],
     })
-    await getDb().insert(scoreRecords).values({
-      userId: 'user2',
-      musicId: 'abc123',
-      playStyle: 'sp',
-      difficulty: 'basic',
-      score: 900_000,
-      rank: 'AAA',
-    })
+    await insertScoreRecord(getDb(), { userId: 'user2' })
 
     expect(await isMusicVisibleToUser(getDb(), 'abc123', 'user2')).toBe(true)
   })

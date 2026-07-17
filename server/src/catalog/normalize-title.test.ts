@@ -12,8 +12,8 @@ describe('normalizeTitle', () => {
   })
 
   it('applies NFKC normalization to fold compatibility characters', () => {
-    // Fullwidth alphanumerics/space (U+FF21-FF5A, U+3000) normalize to
-    // their halfwidth ASCII equivalents under NFKC.
+    // 全角英数字・全角スペース (U+FF21-FF5A, U+3000) は NFKC で
+    // 半角 ASCII の等価文字に正規化される。
     expect(normalizeTitle('ＭＡＸ　３００')).toBe('MAX 300')
   })
 

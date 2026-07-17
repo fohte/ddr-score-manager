@@ -1,4 +1,5 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, type SQL, sql } from 'drizzle-orm'
+import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import type { Difficulty, ParsedPage, PlayStyle } from 'parser'
 
 import { normalizeTitle } from '@/catalog/normalize-title'
@@ -10,6 +11,24 @@ import {
   musics,
   musicSubmissions,
 } from '@/db/schema'
+
+// trusted なメタデータ上書きで、新しい値が未指定 (undefined) の場合に既存値を保持する。
+const keepIfUndefined = <T>(
+  newValue: T | undefined,
+  column: AnyPgColumn,
+): T | SQL => newValue ?? sql`${column}`
+
+// 初回承認時刻のみを確定し、以降の再承認では上書きしない。
+const coalesceApprovedAt = (column: AnyPgColumn): SQL =>
+  sql`coalesce(${column}, now())`
+
+// 非信頼ユーザーによる null 列補完: pending かつ現在値が null のときのみ埋める。
+const fillIfPendingAndNull = (
+  statusColumn: AnyPgColumn,
+  targetColumn: AnyPgColumn,
+  newValue: unknown,
+): SQL =>
+  sql`CASE WHEN ${statusColumn} = 'pending' AND ${targetColumn} IS NULL THEN ${newValue} ELSE ${targetColumn} END`
 
 interface ChartUpdate {
   playStyle: PlayStyle
@@ -27,11 +46,10 @@ interface MusicUpdate {
 const chartKey = (playStyle: PlayStyle, difficulty: Difficulty): string =>
   `${playStyle}:${difficulty}`
 
-// Aggregates every page's music/chart facts into one update per music, so a
-// single upload spanning both page types is written to the catalog once per
-// entry instead of racing itself. scoreList rows only prove a chart exists
-// (no level); musicDetail is the only source for artist/level, so it's
-// applied in a second pass that overrides the scoreList baseline.
+// 全ページの楽曲・譜面情報を楽曲単位で 1 つに集約する。両ページ種別を含む
+// 1 回のアップロードでも、カタログへの書き込みは楽曲ごとに 1 回で済む。
+// scoreList の行は譜面の存在のみを示す (level を持たない)。artist/level は
+// musicDetail のみが提供するため、2 パス目で scoreList のベースラインを上書きする。
 const aggregateMusicUpdates = (
   pages: ParsedPage[],
 ): Map<string, MusicUpdate> => {
@@ -89,10 +107,9 @@ interface MusicRow {
   status: string
 }
 
-// The INSERT ... ON CONFLICT itself takes the row lock this module's
-// approval-threshold aggregation relies on (see data-models.md's catalog
-// trust model), so every subsequent read of this music's submissions/status
-// within the same tx observes a consistent, serialized view.
+// INSERT ... ON CONFLICT 自体が、本モジュールの承認閾値集計が依拠する行ロックを
+// 取得する。そのため同一トランザクション内でこの楽曲の送信記録・status を
+// 読み取る後続処理は、常に一貫した直列化されたビューを観測できる。
 const upsertMusic = async (
   tx: Tx,
   params: {
@@ -118,9 +135,9 @@ const upsertMusic = async (
         target: musics.id,
         set: {
           title,
-          artist: artist ?? sql`${musics.artist}`,
+          artist: keepIfUndefined(artist, musics.artist),
           status: 'approved',
-          approvedAt: sql`coalesce(${musics.approvedAt}, now())`,
+          approvedAt: coalesceApprovedAt(musics.approvedAt),
         },
       })
       .returning({ id: musics.id, title: musics.title, status: musics.status })
@@ -128,16 +145,19 @@ const upsertMusic = async (
     return row
   }
 
-  // Untrusted senders may only fill a still-null column on a pending entry
-  // (e.g. artist); title changes only through the approval paths below, and
-  // approved entries are never touched here.
+  // 非信頼ユーザーは pending エントリの null 列 (artist 等) の補完のみ行える。
+  // title の変更は下記の承認遷移経路でのみ発生し、approved エントリは一切変更しない。
   const [row] = await tx
     .insert(musics)
     .values({ id: musicId, title, artist: artist ?? null, status: 'pending' })
     .onConflictDoUpdate({
       target: musics.id,
       set: {
-        artist: sql`CASE WHEN ${musics.status} = 'pending' AND ${musics.artist} IS NULL THEN ${artist ?? null} ELSE ${musics.artist} END`,
+        artist: fillIfPendingAndNull(
+          musics.status,
+          musics.artist,
+          artist ?? null,
+        ),
       },
     })
     .returning({ id: musics.id, title: musics.title, status: musics.status })
@@ -168,12 +188,16 @@ const approveChartIfThresholdReached = async (
 
   await tx
     .update(musicCharts)
-    .set({ status: 'approved', approvedAt: new Date() })
+    .set({
+      status: 'approved',
+      approvedAt: coalesceApprovedAt(musicCharts.approvedAt),
+    })
     .where(
       and(
         eq(musicCharts.musicId, musicId),
         eq(musicCharts.playStyle, playStyle),
         eq(musicCharts.difficulty, difficulty),
+        eq(musicCharts.status, 'pending'),
       ),
     )
   await tx
@@ -187,10 +211,9 @@ const approveChartIfThresholdReached = async (
     )
 }
 
-// Charts pending under a music that was just approved were held back
-// because chart approval requires the parent music to be approved first;
-// re-run each one's threshold check now that the precondition holds. Also
-// reused by manual approval (approve.ts) for the same reason.
+// 楽曲が承認されるまで、配下の pending 譜面は「楽曲が approved であること」
+// という前提条件を満たせず判定を保留されていた。ここで前提条件を満たしたので
+// 各譜面の閾値判定を再実行する。手動承認 (approve.ts) からも同じ理由で再利用する。
 export const reevaluatePendingCharts = async (
   tx: Tx,
   musicId: string,
@@ -263,9 +286,9 @@ const registerChart = async (
           musicCharts.difficulty,
         ],
         set: {
-          level: level ?? sql`${musicCharts.level}`,
+          level: keepIfUndefined(level, musicCharts.level),
           status: 'approved',
-          approvedAt: sql`coalesce(${musicCharts.approvedAt}, now())`,
+          approvedAt: coalesceApprovedAt(musicCharts.approvedAt),
         },
       })
     await tx
@@ -296,12 +319,16 @@ const registerChart = async (
         musicCharts.difficulty,
       ],
       set: {
-        level: sql`CASE WHEN ${musicCharts.status} = 'pending' AND ${musicCharts.level} IS NULL THEN ${level ?? null} ELSE ${musicCharts.level} END`,
+        level: fillIfPendingAndNull(
+          musicCharts.status,
+          musicCharts.level,
+          level ?? null,
+        ),
       },
     })
-  // Re-fetch after the upsert (under its row lock) instead of trusting the
-  // pre-upsert music status: an untrusted submission can arrive for a chart
-  // whose music was approved by a concurrent trusted submission moments ago.
+  // upsert 前の楽曲 status をそのまま信頼せず、upsert 後 (行ロック取得後) に
+  // 再取得する: 非信頼送信の直前に、同時実行中の信頼済み送信でこの譜面の楽曲が
+  // 承認されている可能性があるため。
   const [chart] = await tx
     .select({ status: musicCharts.status })
     .from(musicCharts)
@@ -309,8 +336,8 @@ const registerChart = async (
   if (chart === undefined)
     throw new Error('music_charts upsert returned no row')
 
-  // Submission tracking is pending-only (data-models.md): an already-approved
-  // chart must not accumulate submission rows.
+  // 送信記録は pending エントリの追跡専用: 既に approved な譜面に
+  // 送信記録を蓄積してはならない。
   if (chart.status !== 'pending') return
 
   await tx
@@ -401,9 +428,9 @@ const registerMusic = async (
     )
   }
 
-  // Idempotent: re-running this against a music with no pending charts (the
-  // common case) is a single empty-result query, so it's cheaper to always
-  // call it than to track whether this call is what flipped the status.
+  // 冪等な処理: pending 譜面が無い楽曲 (大半のケース) に対して呼んでも
+  // 空結果のクエリ 1 回で済むため、「この呼び出しで承認遷移が起きたか」を
+  // 個別に追跡するより、常に呼ぶ方が安価。
   if (musicApproved) {
     await reevaluatePendingCharts(tx, musicId, approvalThreshold)
   }

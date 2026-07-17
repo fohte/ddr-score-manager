@@ -27,7 +27,7 @@ export const approveCatalogEntries = async (
         .set({ status: 'approved', approvedAt: new Date() })
         .where(and(eq(musics.id, musicId), eq(musics.status, 'pending')))
         .returning({ id: musics.id })
-      if (approved === undefined) continue // unknown or already approved: ignore (idempotent)
+      if (approved === undefined) continue // 存在しない・既に approved は無視 (冪等)
 
       approvedMusics++
       await tx
@@ -38,7 +38,7 @@ export const approveCatalogEntries = async (
 
     let approvedCharts = 0
     for (const chart of input.charts ?? []) {
-      // Chart approval requires the parent music to already be approved.
+      // 譜面の承認は楽曲が既に approved であることを前提とする。
       const [music] = await tx
         .select({ status: musics.status })
         .from(musics)
@@ -57,7 +57,7 @@ export const approveCatalogEntries = async (
           ),
         )
         .returning({ musicId: musicCharts.musicId })
-      if (approved === undefined) continue // unknown or already approved: ignore (idempotent)
+      if (approved === undefined) continue // 存在しない・既に approved は無視 (冪等)
 
       approvedCharts++
       await tx

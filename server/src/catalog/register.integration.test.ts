@@ -1,9 +1,11 @@
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import type { Difficulty, PlayStyle } from 'parser'
 import { describe, expect, it } from 'vitest'
 
 import { createCatalogService } from '@/catalog/catalog-service'
 import {
+  getChart as getChartRow,
+  getMusic as getMusicRow,
   insertUser,
   musicDetailPage,
   normalizeChart,
@@ -12,7 +14,7 @@ import {
   scoreRow,
 } from '@/catalog/test/fixtures'
 import type { CatalogRegisterInput } from '@/catalog/types'
-import { musicCharts, musics, musicSubmissions } from '@/db/schema'
+import { musicSubmissions } from '@/db/schema'
 import { setupDrizzleTx } from '@/db/test/db'
 
 const APPROVAL_THRESHOLD = 2
@@ -25,35 +27,13 @@ describe('CatalogService.register', () => {
     await getDb().transaction((tx) => service.register(tx, input))
   }
 
-  const getMusic = async (musicId: string) => {
-    const [row] = await getDb()
-      .select()
-      .from(musics)
-      .where(eq(musics.id, musicId))
-    if (row === undefined) throw new Error(`music not found: ${musicId}`)
-    return row
-  }
+  const getMusic = (musicId: string) => getMusicRow(getDb(), musicId)
 
-  const getChart = async (
+  const getChart = (
     musicId: string,
     playStyle: PlayStyle,
     difficulty: Difficulty,
-  ) => {
-    const [row] = await getDb()
-      .select()
-      .from(musicCharts)
-      .where(
-        and(
-          eq(musicCharts.musicId, musicId),
-          eq(musicCharts.playStyle, playStyle),
-          eq(musicCharts.difficulty, difficulty),
-        ),
-      )
-    if (row === undefined) {
-      throw new Error(`chart not found: ${musicId}/${playStyle}/${difficulty}`)
-    }
-    return row
-  }
+  ) => getChartRow(getDb(), musicId, playStyle, difficulty)
 
   const getMusicSubmissions = async (musicId: string) =>
     getDb()
@@ -114,9 +94,23 @@ describe('CatalogService.register', () => {
         ],
       })
 
-      expect((await getMusic('abc123')).title).toBe('New Title')
-      expect((await getMusic('abc123')).artist).toBe('New Artist')
-      expect((await getChart('abc123', 'sp', 'basic')).level).toBe(15)
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'New Title',
+        artist: 'New Artist',
+        status: 'approved',
+        approvedAt: 'SET',
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: 15,
+        status: 'approved',
+        approvedAt: 'SET',
+      })
     })
   })
 
@@ -167,8 +161,15 @@ describe('CatalogService.register', () => {
         pages: [scoreListPage([scoreRow({ musicTitle: 'Different Title' })])],
       })
 
-      expect((await getMusic('abc123')).title).toBe('First Title')
-      expect((await getMusic('abc123')).status).toBe('pending')
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'First Title',
+        artist: null,
+        status: 'pending',
+        approvedAt: null,
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
     })
 
     it('fills a null artist column on a pending music', async () => {
@@ -214,9 +215,23 @@ describe('CatalogService.register', () => {
         ],
       })
 
-      expect((await getMusic('abc123')).title).toBe('Approved Title')
-      expect((await getMusic('abc123')).artist).toBe('Approved Artist')
-      expect((await getChart('abc123', 'sp', 'basic')).level).toBe(10)
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'Approved Title',
+        artist: 'Approved Artist',
+        status: 'approved',
+        approvedAt: 'SET',
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: 10,
+        status: 'approved',
+        approvedAt: 'SET',
+      })
     })
   })
 
@@ -255,8 +270,15 @@ describe('CatalogService.register', () => {
         pages: [scoreListPage([scoreRow({ musicTitle: 'MAX 300' })])],
       })
 
-      expect((await getMusic('abc123')).status).toBe('approved')
-      expect((await getMusic('abc123')).title).toBe('MAX 300')
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'MAX 300',
+        artist: null,
+        status: 'approved',
+        approvedAt: 'SET',
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
       expect(await getMusicSubmissions('abc123')).toEqual([])
     })
 
@@ -282,9 +304,9 @@ describe('CatalogService.register', () => {
       await insertUser(getDb(), 'user1')
       await insertUser(getDb(), 'user2')
       await insertUser(getDb(), 'trusted1')
-      // Two untrusted submitters agree on the chart but disagree on the
-      // music title, so the chart submission count reaches the threshold
-      // while the parent music itself stays pending (title mismatch).
+      // 非信頼な 2 送信者は譜面については一致するが楽曲タイトルは食い違うため、
+      // 譜面の送信記録数は閾値に達する一方、楽曲自体はタイトル不一致で
+      // pending のままになる。
       await register({
         userId: 'user1',
         trusted: false,
@@ -295,8 +317,23 @@ describe('CatalogService.register', () => {
         trusted: false,
         pages: [scoreListPage([scoreRow({ musicTitle: 'Title B' })])],
       })
-      expect((await getMusic('abc123')).status).toBe('pending')
-      expect((await getChart('abc123', 'sp', 'basic')).status).toBe('pending')
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'Title A',
+        artist: null,
+        status: 'pending',
+        approvedAt: null,
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: null,
+        status: 'pending',
+        approvedAt: null,
+      })
 
       await register({
         userId: 'trusted1',
@@ -304,8 +341,23 @@ describe('CatalogService.register', () => {
         pages: [scoreListPage([scoreRow({ musicTitle: 'Title C' })])],
       })
 
-      expect((await getMusic('abc123')).status).toBe('approved')
-      expect((await getChart('abc123', 'sp', 'basic')).status).toBe('approved')
+      expect(normalizeMusic(await getMusic('abc123'))).toEqual({
+        id: 'abc123',
+        title: 'Title C',
+        artist: null,
+        status: 'approved',
+        approvedAt: 'SET',
+        createdAt: 'TIMESTAMP',
+        updatedAt: 'TIMESTAMP',
+      })
+      expect(normalizeChart(await getChart('abc123', 'sp', 'basic'))).toEqual({
+        musicId: 'abc123',
+        playStyle: 'sp',
+        difficulty: 'basic',
+        level: null,
+        status: 'approved',
+        approvedAt: 'SET',
+      })
     })
   })
 })
