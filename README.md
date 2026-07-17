@@ -22,6 +22,11 @@ pnpm --filter server run dev
 `mise run db:up` がそのポートを解決し、正しい `DATABASE_URL` を含む `.env.runtime` を書き出す。
 mise はこれを自動的に読み込む。
 
+### スキーマ変更
+
+`server/src/auth.ts` の better-auth 構成 (プラグイン追加など、認証テーブルに影響する変更) を変えた場合は、先に `pnpm --filter server run auth:generate` でスキーマ (`server/src/db/schema/auth.ts`) を再生成してから `pnpm --filter server run db:generate` でマイグレーションを生成する。
+それ以外のテーブルは `db:generate` を直接実行する。
+
 ### テスト
 
 `pnpm run test` で全ワークスペースのテストを実行する。
