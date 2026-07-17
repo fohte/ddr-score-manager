@@ -5,16 +5,10 @@ packages:
   - 'bookmarklet'
 
 allowBuilds:
-  # ssh2's optional native accelerator, pulled in by @testcontainers/postgresql
-  # -> dockerode. Only used for ssh:// Docker hosts; we connect over the local
-  # Docker socket, so the pure-JS fallback is fine.
-  cpu-features: false
   # required by vitest's transformer
   esbuild: true
   # required by @opentelemetry/exporter-trace-otlp-proto
   protobufjs: true
-  # see cpu-features above
-  ssh2: false
   # required by @fohte/eslint-config -> eslint-plugin-import-x for "@/*" resolution
   unrs-resolver: true
 
