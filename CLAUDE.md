@@ -8,6 +8,30 @@ When a change would push a file's non-test code past ~500 lines, split it along 
 
 Prefer creating a new focused file over appending to the largest existing one.
 
+## Testing
+
+### Running tests
+
+```sh
+pnpm run test                 # all workspaces
+pnpm --filter server run test # server only (runs tsc --noEmit + vitest in parallel)
+```
+
+### Server integration tests — database setup
+
+Server integration tests require PostgreSQL running via Docker.
+
+```sh
+mise run db:up                                                              # skip if already running
+docker compose exec db createdb -U ddr_score_manager ddr_score_manager_test # first time only
+```
+
+The Compose file uses a fixed project name (`ddr-score-manager-infra`), so the same PostgreSQL container is shared across all worktrees. Running `mise run db:up` from any worktree is safe and will not create duplicate containers — skip if already running for development.
+
+The `db` service publishes Postgres on a random host port to avoid clashing with other projects. `mise run db:up` resolves the assigned port and writes it to `.env.runtime` as both `DATABASE_URL` (`ddr_score_manager_dev`) and `TEST_DATABASE_URL` (`ddr_score_manager_test`); mise loads both automatically and `server`'s test runs prefer `TEST_DATABASE_URL`. Do not point `DATABASE_URL` at `ddr_score_manager_dev` for tests — existing data there causes test failures.
+
+Migrations are applied automatically by `server/src/db/test/global-setup.ts`.
+
 ## Test code rules
 
 ### Assert on the whole output with a single equality check

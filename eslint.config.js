@@ -18,4 +18,11 @@ export default config(
       ],
     },
   },
+  {
+    // vite.config.ts and vitest.config.ts are outside src/ where the @ alias is unavailable
+    files: ['**/vite.config.ts', '**/vitest.config.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 )

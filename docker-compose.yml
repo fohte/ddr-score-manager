@@ -1,0 +1,30 @@
+# DB 専用 Compose ファイル
+# 全 worktree で共有する。1 回だけ起動すればよい:
+#   mise run db:up
+name: ddr-score-manager-infra
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ddr_score_manager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ddr_score_manager}
+      POSTGRES_DB: ${POSTGRES_DB:-ddr_score_manager_dev}
+    ports:
+      - '127.0.0.1::5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-ddr_score_manager}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ddr-score-manager-net
+
+volumes:
+  db_data:
+
+networks:
+  ddr-score-manager-net:
+    name: ddr-score-manager-net

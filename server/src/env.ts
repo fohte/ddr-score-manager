@@ -17,6 +17,7 @@ export type LogLevel = (typeof LOG_LEVELS)[number]
 export interface Env {
   PORT: number
   LOG_LEVEL: LogLevel
+  DATABASE_URL: string
 }
 
 const DEFAULT_PORT = 3000
@@ -35,10 +36,34 @@ export class EnvError extends Error {
   }
 }
 
+const missingEnvMessage = (key: string): string =>
+  `missing required env: ${key}`
+
+// Standalone from loadEnv/Env: src/db/migrate.ts only ever needs this one
+// var and must not fail on the rest of the app's required env.
+export const requireDatabaseUrl = (
+  source: Readonly<Record<string, string | undefined>> = process.env,
+): string => {
+  const raw = source['DATABASE_URL']
+  if (raw === undefined || raw === '') {
+    throw new EnvError([missingEnvMessage('DATABASE_URL')])
+  }
+  return raw
+}
+
 export const loadEnv = (
   source: Readonly<Record<string, string | undefined>> = process.env,
 ): Env => {
   const issues: string[] = []
+
+  const parseDatabaseUrl = (): string => {
+    const raw = source['DATABASE_URL']
+    if (raw === undefined || raw === '') {
+      issues.push(missingEnvMessage('DATABASE_URL'))
+      return ''
+    }
+    return raw
+  }
 
   const parsePort = (): number => {
     const raw = source['PORT']
@@ -71,6 +96,7 @@ export const loadEnv = (
   const env: Env = {
     PORT: parsePort(),
     LOG_LEVEL: parseLogLevel(),
+    DATABASE_URL: parseDatabaseUrl(),
   }
 
   if (issues.length > 0) {

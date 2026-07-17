@@ -1,9 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from '@/app'
+import { createSql, pingDb, PLACEHOLDER_DATABASE_URL } from '@/db'
+import { requireDatabaseUrl } from '@/env'
 import { createLogger } from '@/logger'
 
-const app = createApp({ logger: createLogger('fatal') })
+// Never queried by the tests below, so postgres.js's lazy connection never
+// actually dials this placeholder.
+const sql = createSql(PLACEHOLDER_DATABASE_URL)
+
+const app = createApp({
+  logger: createLogger('fatal'),
+  checkDb: () => pingDb(sql),
+})
 
 describe('createApp', () => {
   it('responds to the health check', async () => {
@@ -43,10 +52,42 @@ describe('createApp', () => {
     vi.spyOn(logger, 'info').mockImplementation(() => {
       throw new Error('boom')
     })
-    const brokenApp = createApp({ logger })
+    const brokenApp = createApp({ logger, checkDb: () => pingDb(sql) })
 
     const res = await brokenApp.request('/api/health')
     expect(res.status).toBe(500)
     expect(await res.json()).toEqual({ error: 'Internal Server Error' })
+  })
+
+  describe('/healthz', () => {
+    it('returns 200 when the database is reachable', async () => {
+      const reachableSql = createSql(requireDatabaseUrl())
+      const healthyApp = createApp({
+        logger: createLogger('fatal'),
+        checkDb: () => pingDb(reachableSql),
+      })
+      try {
+        const res = await healthyApp.request('/healthz')
+        expect(res.status).toBe(200)
+        expect(await res.json()).toEqual({ status: 'ok' })
+      } finally {
+        await reachableSql.end({ timeout: 5 })
+      }
+    })
+
+    it('returns 503 when the database is unreachable', async () => {
+      const unreachableSql = createSql('postgresql://user:pass@127.0.0.1:1/db')
+      const unhealthyApp = createApp({
+        logger: createLogger('fatal'),
+        checkDb: () => pingDb(unreachableSql),
+      })
+      try {
+        const res = await unhealthyApp.request('/healthz')
+        expect(res.status).toBe(503)
+        expect(await res.json()).toEqual({ status: 'error' })
+      } finally {
+        await unreachableSql.end({ timeout: 5 })
+      }
+    })
   })
 })

@@ -158,6 +158,23 @@ jobs:
         package: ${{ fromJSON(needs.setup.outputs.packages) }}
     name: 'unit-test (${{ matrix.package }})'
     runs-on: ubuntu-latest
+    # The `server` package's integration tests need PostgreSQL. The matrix legs share
+    # one job definition, so this service starts for every package — harmless idle
+    # cost for the other legs, but avoids forking the job.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ddr_score_manager
+          POSTGRES_PASSWORD: ddr_score_manager
+          POSTGRES_DB: ddr_score_manager_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ddr_score_manager"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -219,6 +236,9 @@ jobs:
 
       - name: Run tests
         working-directory: ${{ matrix.package }}
+        env:
+          # The server leg's integration tests need this; harmless no-op for other legs.
+          DATABASE_URL: postgresql://ddr_score_manager:ddr_score_manager@localhost:5432/ddr_score_manager_test
         run: pnpm run test
 
   # Aggregation gate for the unit-test matrix. Matrix leg names are dynamic and
