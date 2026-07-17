@@ -2,14 +2,14 @@
 
 Score viewer and visualizer for DDR
 
-## Development
+## 開発
 
-### Prerequisites
+### 前提条件
 
-- [mise](https://mise.jdx.dev/) (manages Node.js, pnpm, and other tool versions via `.mise.toml`)
-- Docker + docker compose plugin ([Docker Desktop](https://www.docker.com/) or [Colima](https://github.com/abiosoft/colima))
+- [mise](https://mise.jdx.dev/) (`.mise.toml` により Node.js, pnpm などのツールバージョンを管理する)
+- Docker + docker compose プラグイン ([Docker Desktop](https://www.docker.com/) または [Colima](https://github.com/abiosoft/colima))
 
-### Setup
+### セットアップ
 
 ```sh
 scripts/bootstrap
@@ -18,29 +18,29 @@ pnpm --filter server run db:migrate
 pnpm --filter server run dev
 ```
 
-The `db` service is published to a random host port to avoid clashing with other projects' Postgres instances — `mise run db:up` resolves it and writes `.env.runtime` with the correct `DATABASE_URL`, which mise loads automatically.
+`db` サービスは他プロジェクトの Postgres と衝突しないようランダムなホストポートで公開される。`mise run db:up` がそのポートを解決し、正しい `DATABASE_URL` を含む `.env.runtime` を書き出す。mise はこれを自動的に読み込む。
 
-### Testing
+### テスト
 
-Tests are run with `pnpm run test`, which executes tests across all workspaces.
+`pnpm run test` で全ワークスペースのテストを実行する。
 
-#### Server integration tests
+#### サーバーの統合テスト
 
-Server integration tests require a running PostgreSQL instance and a dedicated test database (`ddr_score_manager_test`).
+サーバーの統合テストには、起動中の PostgreSQL と専用のテスト用データベース (`ddr_score_manager_test`) が必要。
 
 ```sh
-# 1. Start PostgreSQL via Docker and write .env.runtime (skip if already running for development)
+# 1. Docker で PostgreSQL を起動し .env.runtime を書き出す (開発用に起動済みならスキップ)
 mise run db:up
 
-# 2. Create the test database (first time only)
+# 2. テスト用データベースを作成する (初回のみ)
 docker compose exec db createdb -U ddr_score_manager ddr_score_manager_test
 
-# 3. Run server tests
+# 3. サーバーのテストを実行する
 pnpm --filter server run test
 ```
 
-The Compose file uses a fixed project name (`ddr-score-manager-infra`), so the same PostgreSQL container is shared across all worktrees. Running `mise run db:up` from any worktree is safe and will not create duplicate containers.
+Compose ファイルは固定の project name (`ddr-score-manager-infra`) を使うため、同じ PostgreSQL コンテナが全 worktree で共有される。どの worktree から `mise run db:up` を実行しても安全で、コンテナが重複して作成されることはない。
 
-`mise run db:up` writes `.env.runtime` with both `DATABASE_URL` (pointed at `ddr_score_manager_dev`) and `TEST_DATABASE_URL` (pointed at `ddr_score_manager_test`). mise loads both automatically, and `pnpm --filter server run test` prefers `TEST_DATABASE_URL` on its own — no manual port lookup or `export` needed, and dev data in `ddr_score_manager_dev` is never at risk.
+`mise run db:up` は `.env.runtime` に `DATABASE_URL` (`ddr_score_manager_dev` を指す) と `TEST_DATABASE_URL` (`ddr_score_manager_test` を指す) の両方を書き出す。mise が両方を自動的に読み込むため、`pnpm --filter server run test` は `TEST_DATABASE_URL` を自動的に優先する。手動でのポート確認や `export` は不要で、`ddr_score_manager_dev` の開発用データが失われる心配もない。
 
-Migrations are applied automatically by the test global setup (`server/src/db/test/global-setup.ts`), so there is no need to run `db:migrate` manually for the test database.
+マイグレーションはテストの global setup (`server/src/db/test/global-setup.ts`) が自動的に適用するため、テスト用データベースに対して手動で `db:migrate` を実行する必要はない。
