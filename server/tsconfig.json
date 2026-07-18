@@ -11,5 +11,6 @@
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "references": [{ "path": "../parser/tsconfig.build.json" }]
 }

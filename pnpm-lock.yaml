@@ -101,6 +101,9 @@ importers:
       hono:
         specifier: 4.12.28
         version: 4.12.28
+      parser:
+        specifier: workspace:*
+        version: link:../parser
       pino:
         specifier: 10.3.1
         version: 10.3.1

@@ -1,6 +1,8 @@
+import { TransactionRollbackError } from 'drizzle-orm'
 import postgres from 'postgres'
 import { afterAll, afterEach, beforeEach } from 'vitest'
 
+import { createDb, createSql, type Db, type Tx } from '@/db'
 import { requireDatabaseUrl } from '@/env'
 
 // One shared pool for the whole worker, created lazily so importing this
@@ -49,4 +51,63 @@ export const setupTx = (): (() => postgres.Sql) => {
     }
     return reserved
   }
+}
+
+// ここでは setupTx() の予約接続を再利用できない: Drizzle の postgres-js
+// ドライバは Db 構築時に client.options.parsers/serializers を読むが、
+// postgres.js が options を持つのは接続プールのメインクライアントのみで、
+// reserve() が返す軽量オブジェクトには無い (ラップするとクラッシュする)。
+// そのため、共有プールのメインクライアント上で自前の db.transaction() を
+// 開始し、rollback シグナルでテスト全体にわたって開いたままにすることで、
+// setupTx() と同じテストごとの BEGIN/ROLLBACK 分離を実現する。
+export const setupDrizzleTx = (): (() => Tx) => {
+  let currentTx: Tx | null = null
+  let signalDone: (() => void) | null = null
+  let txSettled: Promise<void> | null = null
+
+  beforeEach(async () => {
+    let resolveTx: (tx: Tx) => void
+    const txReady = new Promise<Tx>((resolve) => {
+      resolveTx = resolve
+    })
+    const done = new Promise<void>((resolve) => {
+      signalDone = resolve
+    })
+
+    txSettled = createDb(getPool())
+      .transaction(async (tx) => {
+        resolveTx(tx)
+        await done
+        tx.rollback()
+      })
+      .catch((err: unknown) => {
+        if (!(err instanceof TransactionRollbackError)) throw err
+      })
+
+    currentTx = await txReady
+  })
+
+  afterEach(async () => {
+    signalDone?.()
+    await txSettled
+    currentTx = null
+  })
+
+  return () => {
+    if (currentTx === null) {
+      throw new Error(
+        'tx accessed outside a test (call setupDrizzleTx in describe)',
+      )
+    }
+    return currentTx
+  }
+}
+
+// 複数トランザクションが Postgres の行ロックを競合するケースを検証する
+// テスト用の、実際にコミットする独立接続 (setupTx の単一予約接続では
+// 2 つのトランザクションの競合を再現できない)。
+// 戻り値の close() は呼び出し側が責務を持ち、afterAll/afterEach で呼ぶこと。
+export const createTestDb = (): { db: Db; close: () => Promise<void> } => {
+  const sql = createSql(requireDatabaseUrl())
+  return { db: createDb(sql), close: () => sql.end({ timeout: 5 }) }
 }
