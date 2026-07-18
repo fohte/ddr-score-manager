@@ -2,14 +2,11 @@ import {
   DIFFICULTY_SECTION_SELECTOR,
   MUSIC_INFO_TABLE_SELECTOR,
   parseMusicDetail,
-} from '@/musicDetailParser'
-import { parsedPageSchema } from '@/schemas'
-import {
-  parseScoreListRows,
-  SCORE_LIST_TABLE_SELECTOR,
-} from '@/scoreListParser'
-import type { EamusementParser, ParsedPage, ParseError, Result } from '@/types'
-import { err, ok } from '@/types'
+} from '#musicDetailParser'
+import { parsedPageSchema } from '#schemas'
+import { parseScoreListRows, SCORE_LIST_TABLE_SELECTOR } from '#scoreListParser'
+import type { EamusementParser, ParsedPage, ParseError, Result } from '#types'
+import { err, ok } from '#types'
 
 const detectAndParse = (doc: Document): Result<ParsedPage, ParseError> => {
   if (doc.querySelector(SCORE_LIST_TABLE_SELECTOR)) {

@@ -1,5 +1,5 @@
+import type { Difficulty, PlayStyle } from '@fohte/ddr-score-manager-parser'
 import { and, eq } from 'drizzle-orm'
-import type { Difficulty, PlayStyle } from 'parser'
 import { describe, expect, it } from 'vitest'
 
 import { createCatalogService } from '@/catalog/catalog-service'

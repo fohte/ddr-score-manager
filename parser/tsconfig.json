@@ -17,9 +17,6 @@
       "ESNext.Iterator",
       "ESNext.Promise",
       "DOM"
-    ],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    ]
   }
 }

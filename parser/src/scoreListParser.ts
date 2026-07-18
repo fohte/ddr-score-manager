@@ -5,10 +5,10 @@ import {
   mapFlareRank,
   mapPlayStyleFromStyleParam,
   mapRank,
-} from '@/enumMappings'
-import type { ParsedScoreRow, ParseError, PlayStyle, Result } from '@/types'
-import { err, invalidStructure, ok } from '@/types'
-import { getQueryParam } from '@/url'
+} from '#enumMappings'
+import type { ParsedScoreRow, ParseError, PlayStyle, Result } from '#types'
+import { err, invalidStructure, ok } from '#types'
+import { getQueryParam } from '#url'
 
 export const SCORE_LIST_TABLE_SELECTOR = 'table#data_tbl'
 

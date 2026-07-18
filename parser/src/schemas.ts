@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { ParsedMusicDetail, ParsedPage, ParsedScoreRow } from '@/types'
+import type { ParsedMusicDetail, ParsedPage, ParsedScoreRow } from '#types'
 
 // アップロード API の入力検証 (musics.id の CHECK 制約) と共有するパターン。
 const MUSIC_ID_PATTERN = /^[A-Za-z0-9]{1,64}$/

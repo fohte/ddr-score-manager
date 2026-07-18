@@ -1,4 +1,4 @@
-import type { Difficulty, PlayStyle } from '@/types'
+import type { Difficulty, PlayStyle } from '#types'
 
 const DIFFICULTIES: readonly Difficulty[] = [
   'beginner',
