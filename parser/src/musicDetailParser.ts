@@ -1,7 +1,7 @@
-import { mapDifficulty, mapPlayStyleFromDivId } from '@/enumMappings'
-import type { ParsedMusicDetail, ParseError, Result } from '@/types'
-import { err, invalidStructure, ok } from '@/types'
-import { getQueryParam } from '@/url'
+import { mapDifficulty, mapPlayStyleFromDivId } from '#enumMappings'
+import type { ParsedMusicDetail, ParseError, Result } from '#types'
+import { err, invalidStructure, ok } from '#types'
+import { getQueryParam } from '#url'
 
 export const MUSIC_INFO_TABLE_SELECTOR = 'table#music_info'
 export const DIFFICULTY_SECTION_SELECTOR = 'div#difficulty'

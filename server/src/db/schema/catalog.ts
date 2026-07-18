@@ -1,3 +1,4 @@
+import type { Difficulty, PlayStyle } from '@fohte/ddr-score-manager-parser'
 import { sql } from 'drizzle-orm'
 import {
   check,
@@ -9,7 +10,6 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core'
-import type { Difficulty, PlayStyle } from 'parser'
 
 import { user } from '@/db/schema/auth'
 

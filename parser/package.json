@@ -1,9 +1,12 @@
 {
-  "name": "parser",
+  "name": "@fohte/ddr-score-manager-parser",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "imports": {
+    "#*": "./src/*.ts"
   },
   "scripts": {
     "test": "conc pnpm:test:type pnpm:test:unit",

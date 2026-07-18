@@ -1,11 +1,11 @@
-import { and, eq } from 'drizzle-orm'
 import type {
   Difficulty,
   ParsedMusicDetail,
   ParsedPage,
   ParsedScoreRow,
   PlayStyle,
-} from 'parser'
+} from '@fohte/ddr-score-manager-parser'
+import { and, eq } from 'drizzle-orm'
 
 import type { Db, Tx } from '@/db'
 import { musicCharts, musics, scoreRecords, user } from '@/db/schema'

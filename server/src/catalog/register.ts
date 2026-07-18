@@ -1,6 +1,10 @@
+import type {
+  Difficulty,
+  ParsedPage,
+  PlayStyle,
+} from '@fohte/ddr-score-manager-parser'
 import { and, eq, type SQL, sql } from 'drizzle-orm'
 import type { AnyPgColumn } from 'drizzle-orm/pg-core'
-import type { Difficulty, ParsedPage, PlayStyle } from 'parser'
 
 import { normalizeTitle } from '@/catalog/normalize-title'
 import type { CatalogRegisterInput } from '@/catalog/types'

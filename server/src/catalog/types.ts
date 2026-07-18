@@ -1,4 +1,8 @@
-import type { Difficulty, ParsedPage, PlayStyle } from 'parser'
+import type {
+  Difficulty,
+  ParsedPage,
+  PlayStyle,
+} from '@fohte/ddr-score-manager-parser'
 
 import type { Tx } from '@/db'
 
