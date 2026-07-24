@@ -1,4 +1,5 @@
 export * from '@/catalog/catalog-service'
+export * from '@/catalog/errors'
 export * from '@/catalog/normalize-title'
 export * from '@/catalog/trust-policy'
 export * from '@/catalog/types'

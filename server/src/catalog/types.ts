@@ -3,7 +3,9 @@ import type {
   ParsedPage,
   PlayStyle,
 } from '@fohte/ddr-score-manager-parser'
+import type { ResultAsync } from 'neverthrow'
 
+import type { CatalogError } from '@/catalog/errors'
 import type { Tx } from '@/db'
 
 export interface CatalogRegisterInput {
@@ -39,8 +41,10 @@ export interface PendingCatalogResponse {
 
 export interface CatalogService {
   /** 取り込みトランザクション内で楽曲・譜面を登録し、承認評価まで行う */
-  register(tx: Tx, input: CatalogRegisterInput): Promise<void>
+  register(tx: Tx, input: CatalogRegisterInput): ResultAsync<void, CatalogError>
   /** 手動承認。存在しない・承認済みの対象は無視する (冪等) */
-  approve(input: CatalogApproveRequest): Promise<CatalogApproveResponse>
-  listPending(): Promise<PendingCatalogResponse>
+  approve(
+    input: CatalogApproveRequest,
+  ): ResultAsync<CatalogApproveResponse, CatalogError>
+  listPending(): ResultAsync<PendingCatalogResponse, CatalogError>
 }

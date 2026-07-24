@@ -10,6 +10,7 @@ import {
   scoreRow,
   uniqueAlnumId,
 } from '@/catalog/test/fixtures'
+import { runInTransaction } from '@/catalog/transaction'
 import { musicCharts, musics, musicSubmissions, user } from '@/db/schema'
 import { createTestDb } from '@/db/test/db'
 
@@ -34,8 +35,8 @@ describe('CatalogService.register concurrency', () => {
       const serviceA = createCatalogService(a.db, APPROVAL_THRESHOLD)
       const serviceB = createCatalogService(b.db, APPROVAL_THRESHOLD)
 
-      await Promise.all([
-        a.db.transaction((tx) =>
+      const [resultA, resultB] = await Promise.all([
+        runInTransaction(a.db, (tx) =>
           serviceA.register(tx, {
             userId: userA,
             trusted: false,
@@ -46,7 +47,7 @@ describe('CatalogService.register concurrency', () => {
             ],
           }),
         ),
-        b.db.transaction((tx) =>
+        runInTransaction(b.db, (tx) =>
           serviceB.register(tx, {
             userId: userB,
             trusted: false,
@@ -58,6 +59,8 @@ describe('CatalogService.register concurrency', () => {
           }),
         ),
       ])
+      resultA._unsafeUnwrap()
+      resultB._unsafeUnwrap()
 
       expect(normalizeMusic(await getMusic(a.db, musicId))).toEqual({
         id: musicId,

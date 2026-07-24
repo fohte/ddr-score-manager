@@ -12,7 +12,13 @@ import {
   scoreListPage,
   scoreRow,
 } from '@/catalog/test/fixtures'
-import type { CatalogRegisterInput } from '@/catalog/types'
+import { runInTransaction } from '@/catalog/transaction'
+import type {
+  CatalogApproveRequest,
+  CatalogApproveResponse,
+  CatalogRegisterInput,
+  PendingCatalogResponse,
+} from '@/catalog/types'
 import { musicCharts, musicSubmissions } from '@/db/schema'
 import { setupDrizzleTx } from '@/db/test/db'
 
@@ -24,8 +30,19 @@ describe('CatalogService.approve / listPending', () => {
   const service = () => createCatalogService(getDb(), APPROVAL_THRESHOLD)
 
   const register = async (input: CatalogRegisterInput): Promise<void> => {
-    await getDb().transaction((tx) => service().register(tx, input))
+    const result = await runInTransaction(getDb(), (tx) =>
+      service().register(tx, input),
+    )
+    result._unsafeUnwrap()
   }
+
+  const approve = async (
+    input: CatalogApproveRequest,
+  ): Promise<CatalogApproveResponse> =>
+    (await service().approve(input))._unsafeUnwrap()
+
+  const listPending = async (): Promise<PendingCatalogResponse> =>
+    (await service().listPending())._unsafeUnwrap()
 
   const getMusic = (musicId: string) => getMusicRow(getDb(), musicId)
 
@@ -44,7 +61,7 @@ describe('CatalogService.approve / listPending', () => {
         pages: [scoreListPage([scoreRow()])],
       })
 
-      expect(await service().approve({ musicIds: ['abc123'] })).toEqual({
+      expect(await approve({ musicIds: ['abc123'] })).toEqual({
         approvedMusics: 1,
         approvedCharts: 0,
       })
@@ -73,14 +90,14 @@ describe('CatalogService.approve / listPending', () => {
         pages: [scoreListPage([scoreRow()])],
       })
 
-      expect(await service().approve({ musicIds: ['abc123'] })).toEqual({
+      expect(await approve({ musicIds: ['abc123'] })).toEqual({
         approvedMusics: 0,
         approvedCharts: 0,
       })
     })
 
     it('ignores a nonexistent music id', async () => {
-      expect(await service().approve({ musicIds: ['missing'] })).toEqual({
+      expect(await approve({ musicIds: ['missing'] })).toEqual({
         approvedMusics: 0,
         approvedCharts: 0,
       })
@@ -107,7 +124,7 @@ describe('CatalogService.approve / listPending', () => {
         )
 
       expect(
-        await service().approve({
+        await approve({
           charts: [{ musicId: 'abc123', playStyle: 'sp', difficulty: 'basic' }],
         }),
       ).toEqual({ approvedMusics: 0, approvedCharts: 1 })
@@ -130,7 +147,7 @@ describe('CatalogService.approve / listPending', () => {
       })
 
       expect(
-        await service().approve({
+        await approve({
           charts: [{ musicId: 'abc123', playStyle: 'sp', difficulty: 'basic' }],
         }),
       ).toEqual({ approvedMusics: 0, approvedCharts: 0 })
@@ -153,7 +170,7 @@ describe('CatalogService.approve / listPending', () => {
       })
 
       expect(
-        await service().approve({
+        await approve({
           charts: [{ musicId: 'abc123', playStyle: 'sp', difficulty: 'basic' }],
         }),
       ).toEqual({ approvedMusics: 0, approvedCharts: 0 })
@@ -183,7 +200,7 @@ describe('CatalogService.approve / listPending', () => {
         pages: [scoreListPage([scoreRow({ musicTitle: 'Title C' })])],
       })
 
-      const pending = await service().listPending()
+      const pending = await listPending()
 
       expect(
         pending.musics.map((m) => ({ ...m, createdAt: 'TIMESTAMP' })),
@@ -206,7 +223,7 @@ describe('CatalogService.approve / listPending', () => {
     })
 
     it('returns empty lists when nothing is pending', async () => {
-      expect(await service().listPending()).toEqual({
+      expect(await listPending()).toEqual({
         musics: [],
         charts: [],
       })
