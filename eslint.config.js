@@ -10,17 +10,6 @@ export default config(
   // declaration files under dist/ — exclude that build output from lint.
   { ignores: ['**/dist/**'] },
   {
-    // errorHandling は server/ ワークスペースのみを対象にする。
-    // web/parser/bookmarklet では throw/try-catch も neverthrow の
-    // Result 型も要求しない。
-    files: ['**/*.ts', '**/*.tsx'],
-    ignores: ['server/**'],
-    rules: {
-      'no-restricted-syntax': 'off',
-      'neverthrow/must-use-result': 'off',
-    },
-  },
-  {
     rules: {
       'no-restricted-imports': [
         'error',
