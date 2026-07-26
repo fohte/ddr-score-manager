@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node'
 import { EnvError } from '@/env'
 import { main } from '@/main'
 
+// eslint-disable-next-line no-restricted-syntax -- process entrypoint: catches startup failure to flush Sentry and exit with a nonzero code
 try {
   main()
 } catch (err) {

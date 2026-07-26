@@ -35,6 +35,7 @@ export const buildAuthOptions = (deps: AuthDeps): BetterAuthOptions => {
   const rejectUnlessAllowed = (email: string): void => {
     if (!allowlist.isAllowed(email)) {
       deps.logger.warn({ email }, 'rejected sign-in: email not allowlisted')
+      // eslint-disable-next-line no-restricted-syntax -- interops with better-auth's throw-to-reject databaseHooks contract
       throw new APIError('FORBIDDEN', { message: 'email is not allowlisted' })
     }
   }
@@ -72,6 +73,7 @@ export const buildAuthOptions = (deps: AuthDeps): BetterAuthOptions => {
             // than silently allow if that invariant is ever violated — this
             // module's own failure mode is deny-all, not fail-open.
             if (owner === undefined) {
+              // eslint-disable-next-line no-restricted-syntax -- interops with better-auth's throw-to-reject databaseHooks contract
               throw new APIError('FORBIDDEN', {
                 message: 'session owner not found',
               })

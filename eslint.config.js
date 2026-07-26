@@ -1,30 +1,9 @@
 import { config } from '@fohte/eslint-config'
 
-// server/ ワークスペースのみが対象。外部 SDK・フレームワーク (Hono,
-// better-auth, drizzle) との境界、およびプロセス起動/DB接続管理を担う
-// ファイルを throw/try-catch の許容範囲とする。
-const INTEROP_BOUNDARY_FILES = [
-  'server/src/app.ts',
-  'server/src/auth.ts',
-  'server/src/bootstrap.ts',
-  'server/src/db/**/*.ts',
-  'server/src/env.ts',
-  'server/src/index.ts',
-  'server/src/main.ts',
-  // vitest の *.test.ts / __tests__ 命名規則に沿わないテスト専用ヘルパー
-  'server/src/resolve-test-database-url.ts',
-  'server/src/catalog/test/**/*.ts',
-  // db.transaction() の resolve/reject で COMMIT/ROLLBACK を制御する契約に
-  // 従うため、Result の Err を throw に変換する境界
-  'server/src/catalog/transaction.ts',
-  // drizzle-kit CLI が直接 import/実行する設定ファイル
-  'server/drizzle.config.ts',
-]
-
 export default config(
   {
     typescript: { typeChecked: true },
-    errorHandling: { interopBoundaryFiles: INTEROP_BOUNDARY_FILES },
+    errorHandling: {},
   },
   // `server`/`parser` gained tsconfig.build.json project references (for
   // cross-package type resolution), which makes `tsc --build` emit

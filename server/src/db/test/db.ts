@@ -37,6 +37,7 @@ export const setupTx = (): (() => postgres.Sql) => {
     const r = reserved
     reserved = null
     if (r !== null) {
+      // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention; propagates the rejection while guaranteeing release()
       try {
         await r.unsafe('ROLLBACK')
       } finally {
@@ -47,6 +48,7 @@ export const setupTx = (): (() => postgres.Sql) => {
 
   return () => {
     if (reserved === null) {
+      // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention
       throw new Error('tx accessed outside a test (call setupTx in describe)')
     }
     return reserved
@@ -81,6 +83,7 @@ export const setupDrizzleTx = (): (() => Tx) => {
         tx.rollback()
       })
       .catch((err: unknown) => {
+        // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention
         if (!(err instanceof TransactionRollbackError)) throw err
       })
 
@@ -95,6 +98,7 @@ export const setupDrizzleTx = (): (() => Tx) => {
 
   return () => {
     if (currentTx === null) {
+      // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention
       throw new Error(
         'tx accessed outside a test (call setupDrizzleTx in describe)',
       )

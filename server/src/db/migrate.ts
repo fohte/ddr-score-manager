@@ -5,6 +5,7 @@ import { EnvError, requireDatabaseUrl } from '@/env'
 // infra runs this as `node dist/db/migrate.js` in an init container.
 const main = async (): Promise<void> => {
   const sql = createSql(requireDatabaseUrl())
+  // eslint-disable-next-line no-restricted-syntax -- process bootstrap: propagates the rejection while guaranteeing sql.end()
   try {
     await runMigrations(sql)
     console.log('migrations applied')

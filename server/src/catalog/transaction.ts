@@ -15,6 +15,7 @@ export const runInTransaction = <T>(
   ResultAsync.fromPromise(
     db.transaction(async (tx) => {
       const result = await fn(tx)
+      // eslint-disable-next-line no-restricted-syntax -- converts Err to a rejection so db.transaction() ROLLBACKs instead of committing
       if (result.isErr()) throw result.error
       return result.value
     }),
