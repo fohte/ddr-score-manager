@@ -13,6 +13,7 @@ import {
   scoreListPage,
   scoreRow,
 } from '@/catalog/test/fixtures'
+import { runInTransaction } from '@/catalog/transaction'
 import type { CatalogRegisterInput } from '@/catalog/types'
 import { musicSubmissions } from '@/db/schema'
 import { setupDrizzleTx } from '@/db/test/db'
@@ -24,7 +25,10 @@ describe('CatalogService.register', () => {
 
   const register = async (input: CatalogRegisterInput): Promise<void> => {
     const service = createCatalogService(getDb(), APPROVAL_THRESHOLD)
-    await getDb().transaction((tx) => service.register(tx, input))
+    const result = await runInTransaction(getDb(), (tx) =>
+      service.register(tx, input),
+    )
+    result._unsafeUnwrap()
   }
 
   const getMusic = (musicId: string) => getMusicRow(getDb(), musicId)

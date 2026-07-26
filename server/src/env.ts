@@ -49,6 +49,7 @@ export const requireDatabaseUrl = (
 ): string => {
   const raw = source['DATABASE_URL']
   if (raw === undefined || raw === '') {
+    // eslint-disable-next-line no-restricted-syntax -- process bootstrap: fails fast on invalid env
     throw new EnvError([missingEnvMessage('DATABASE_URL')])
   }
   return raw
@@ -118,6 +119,7 @@ export const loadEnv = (
   }
 
   if (issues.length > 0) {
+    // eslint-disable-next-line no-restricted-syntax -- process bootstrap: fails fast on invalid env
     throw new EnvError(issues)
   }
 

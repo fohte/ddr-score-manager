@@ -1,6 +1,8 @@
 import { serve } from '@hono/node-server'
+import * as Sentry from '@sentry/node'
 
 import { createApp } from '@/app'
+import { observability } from '@/bootstrap'
 import { createSql, pingDb } from '@/db'
 import { loadEnv } from '@/env'
 import { createLogger } from '@/logger'
@@ -21,6 +23,12 @@ export const main = (): void => {
   // exception instead of going through the same error-logging exit path.
   server.on('error', (err) => {
     logger.fatal({ err }, 'failed to start server')
-    process.exit(1)
+    Sentry.captureException(err)
+    // observability may be undefined (not configured), so resolve through
+    // Promise.resolve() rather than optional-chaining .finally() off it —
+    // otherwise an undefined observability would skip process.exit(1) entirely.
+    void Promise.resolve(observability?.shutdown()).finally(() =>
+      process.exit(1),
+    )
   })
 }

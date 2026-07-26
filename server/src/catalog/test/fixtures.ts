@@ -80,6 +80,7 @@ export const getMusic = async (
   musicId: string,
 ): Promise<MusicRow> => {
   const [row] = await db.select().from(musics).where(eq(musics.id, musicId))
+  // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention
   if (row === undefined) throw new Error(`music not found: ${musicId}`)
   return row
 }
@@ -101,6 +102,7 @@ export const getChart = async (
       ),
     )
   if (row === undefined) {
+    // eslint-disable-next-line no-restricted-syntax -- test helper outside vitest's *.test.ts/__tests__ convention
     throw new Error(`chart not found: ${musicId}/${playStyle}/${difficulty}`)
   }
   return row

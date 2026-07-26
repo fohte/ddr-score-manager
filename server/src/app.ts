@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { captureWithFingerprint } from '@fohte/service-kit/observability'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import type { Logger } from 'pino'
@@ -20,6 +21,8 @@ const STATIC_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '../public',
 )
+
+const UNHANDLED_ERROR_FINGERPRINT = 'app.hono.unhandled-error'
 
 export const createApp = (deps: AppDeps) => {
   const app = new Hono()
@@ -43,6 +46,9 @@ export const createApp = (deps: AppDeps) => {
       { err, method: c.req.method, path: c.req.path },
       'unhandled error',
     )
+    captureWithFingerprint(err, UNHANDLED_ERROR_FINGERPRINT, {
+      extras: { method: c.req.method, path: c.req.path },
+    })
     return c.json({ error: 'Internal Server Error' }, 500)
   })
 
@@ -53,6 +59,7 @@ export const createApp = (deps: AppDeps) => {
   // Not part of the typed RPC surface: a plain readiness probe for
   // orchestrators, not an API endpoint consumed by the web client.
   app.get('/healthz', async (c) => {
+    // eslint-disable-next-line no-restricted-syntax -- deps.checkDb() is a throw-based readiness probe, not a Result-returning call
     try {
       await deps.checkDb()
       return c.json({ status: 'ok' } as const)

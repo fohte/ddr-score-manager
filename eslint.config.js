@@ -1,7 +1,10 @@
 import { config } from '@fohte/eslint-config'
 
 export default config(
-  { typescript: { typeChecked: true } },
+  {
+    typescript: { typeChecked: true },
+    errorHandling: {},
+  },
   // `server`/`parser` gained tsconfig.build.json project references (for
   // cross-package type resolution), which makes `tsc --build` emit
   // declaration files under dist/ — exclude that build output from lint.
