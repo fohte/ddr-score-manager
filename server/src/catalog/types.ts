@@ -5,8 +5,8 @@ import type {
 } from '@fohte/ddr-score-manager-parser'
 import type { ResultAsync } from 'neverthrow'
 
-import type { CatalogError } from '@/catalog/errors'
-import type { Tx } from '@/db'
+import type { CatalogError } from '#catalog/errors'
+import type { Tx } from '#db/index'
 
 export interface CatalogRegisterInput {
   userId: string

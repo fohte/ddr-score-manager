@@ -14,11 +14,6 @@ if (resolvedDatabaseUrl != null) {
 }
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      '@': '/src',
-    },
-  },
   test: {
     // Applies migrations once for the whole run against DATABASE_URL; see
     // src/db/test/global-setup.ts. Postgres itself must already be running

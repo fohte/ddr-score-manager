@@ -9,9 +9,9 @@ import type { Logger } from 'pino'
 export interface AppDeps {
   logger: Logger
   // A function rather than a `Sql` client directly: `AppType` below is
-  // consumed cross-package for Hono RPC typing, and importing `@/db` here
+  // consumed cross-package for Hono RPC typing, and importing `#db` here
   // would drag its module graph into consumers that don't share this
-  // package's `@/*` path alias.
+  // package's `#*` subpath import.
   checkDb: () => Promise<void>
 }
 

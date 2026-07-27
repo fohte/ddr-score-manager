@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createAllowlistPolicy } from '@/allowlist'
+import { createAllowlistPolicy } from '#allowlist'
 
 describe('createAllowlistPolicy', () => {
   it.each([

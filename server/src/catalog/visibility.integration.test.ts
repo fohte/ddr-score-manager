@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { createCatalogService } from '@/catalog/catalog-service'
+import { createCatalogService } from '#catalog/catalog-service'
 import {
   insertScoreRecord,
   insertUser,
   scoreListPage,
   scoreRow,
-} from '@/catalog/test/fixtures'
-import { runInTransaction } from '@/catalog/transaction'
-import type { CatalogRegisterInput } from '@/catalog/types'
-import { isMusicVisibleToUser } from '@/catalog/visibility'
-import { setupDrizzleTx } from '@/db/test/db'
+} from '#catalog/test/fixtures'
+import { runInTransaction } from '#catalog/transaction'
+import type { CatalogRegisterInput } from '#catalog/types'
+import { isMusicVisibleToUser } from '#catalog/visibility'
+import { setupDrizzleTx } from '#db/test/db'
 
 const APPROVAL_THRESHOLD = 2
 

@@ -2,11 +2,11 @@ import type { Difficulty, PlayStyle } from '@fohte/ddr-score-manager-parser'
 import { and, eq, sql } from 'drizzle-orm'
 import { err, ok, type Result, ResultAsync } from 'neverthrow'
 
-import { type CatalogError, CatalogPersistenceError } from '@/catalog/errors'
-import { coalesceApprovedAt } from '@/catalog/sql-helpers'
-import { tryCatalog } from '@/catalog/try-catalog'
-import type { Tx } from '@/db'
-import { chartSubmissions, musicCharts } from '@/db/schema'
+import { type CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import { coalesceApprovedAt } from '#catalog/sql-helpers'
+import { tryCatalog } from '#catalog/try-catalog'
+import type { Tx } from '#db/index'
+import { chartSubmissions, musicCharts } from '#db/schema/index'
 
 export const approveChartIfThresholdReached = (
   tx: Tx,

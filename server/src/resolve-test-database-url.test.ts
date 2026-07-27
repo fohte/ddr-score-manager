@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { resolveTestDatabaseUrl } from '@/resolve-test-database-url'
+import { resolveTestDatabaseUrl } from '#resolve-test-database-url'
 
 describe('resolveTestDatabaseUrl', () => {
   it('keeps the current value when TEST_DATABASE_URL is unset', () => {

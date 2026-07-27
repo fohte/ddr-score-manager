@@ -11,7 +11,7 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 
-import { user } from '@/db/schema/auth'
+import { user } from '#db/schema/auth'
 
 const bytea = customType<{ data: Buffer }>({
   dataType: () => 'bytea',

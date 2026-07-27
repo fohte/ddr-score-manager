@@ -9,6 +9,10 @@
   },
   "dependencies": {
     "hono": "4.12.30",
+    "neverthrow": "8.2.0",
     "server": "workspace:*"
+  },
+  "imports": {
+    "#*": "./src/*.ts"
   }
 }

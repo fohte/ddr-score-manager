@@ -7,8 +7,8 @@ import type {
 } from '@fohte/ddr-score-manager-parser'
 import { and, eq } from 'drizzle-orm'
 
-import type { Db, Tx } from '@/db'
-import { musicCharts, musics, scoreRecords, user } from '@/db/schema'
+import type { Db, Tx } from '#db/index'
+import { musicCharts, musics, scoreRecords, user } from '#db/schema/index'
 
 export const scoreRow = (
   overrides: Partial<ParsedScoreRow> = {},

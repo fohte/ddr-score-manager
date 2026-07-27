@@ -1,7 +1,7 @@
 import { ResultAsync } from 'neverthrow'
 
-import { CatalogError, CatalogPersistenceError } from '@/catalog/errors'
-import type { Db, Tx } from '@/db'
+import { CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import type { Db, Tx } from '#db/index'
 
 // db.transaction() は「コールバックが返す Promise が resolve すれば COMMIT、
 // reject すれば ROLLBACK」という契約で動く (drizzle-orm/postgres.js)。fn が

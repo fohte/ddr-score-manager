@@ -10,22 +10,6 @@ export default config(
   // declaration files under dist/ — exclude that build output from lint.
   { ignores: ['**/dist/**'] },
   {
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['./*', '../*'],
-              message:
-                'Please use absolute imports instead of relative imports.',
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
     // vite.config.ts and vitest.config.ts are outside src/ where the @ alias is unavailable
     files: ['**/vite.config.ts', '**/vitest.config.ts'],
     rules: {

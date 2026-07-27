@@ -6,10 +6,10 @@ import { eq } from 'drizzle-orm'
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import type { Logger } from 'pino'
 
-import { createAllowlistPolicy } from '@/allowlist'
-import { createSql, PLACEHOLDER_DATABASE_URL } from '@/db'
-import * as schema from '@/db/schema'
-import { createLogger } from '@/logger'
+import { createAllowlistPolicy } from '#allowlist'
+import { createSql, PLACEHOLDER_DATABASE_URL } from '#db/index'
+import * as schema from '#db/schema/index'
+import { createLogger } from '#logger'
 
 const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7 // 7 days
 const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24 // 1 day (sliding refresh)

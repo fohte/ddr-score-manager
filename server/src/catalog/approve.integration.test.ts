@@ -2,7 +2,7 @@ import type { Difficulty, PlayStyle } from '@fohte/ddr-score-manager-parser'
 import { and, eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
-import { createCatalogService } from '@/catalog/catalog-service'
+import { createCatalogService } from '#catalog/catalog-service'
 import {
   getChart as getChartRow,
   getMusic as getMusicRow,
@@ -11,16 +11,16 @@ import {
   normalizeMusic,
   scoreListPage,
   scoreRow,
-} from '@/catalog/test/fixtures'
-import { runInTransaction } from '@/catalog/transaction'
+} from '#catalog/test/fixtures'
+import { runInTransaction } from '#catalog/transaction'
 import type {
   CatalogApproveRequest,
   CatalogApproveResponse,
   CatalogRegisterInput,
   PendingCatalogResponse,
-} from '@/catalog/types'
-import { musicCharts, musicSubmissions } from '@/db/schema'
-import { setupDrizzleTx } from '@/db/test/db'
+} from '#catalog/types'
+import { musicCharts, musicSubmissions } from '#db/schema/index'
+import { setupDrizzleTx } from '#db/test/db'
 
 const APPROVAL_THRESHOLD = 2
 

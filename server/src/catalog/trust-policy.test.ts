@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createCatalogTrustPolicy } from '@/catalog/trust-policy'
+import { createCatalogTrustPolicy } from '#catalog/trust-policy'
 
 describe('createCatalogTrustPolicy', () => {
   it('trusts an email listed in the CSV', () => {

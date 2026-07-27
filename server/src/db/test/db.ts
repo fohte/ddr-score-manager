@@ -2,8 +2,8 @@ import { TransactionRollbackError } from 'drizzle-orm'
 import postgres from 'postgres'
 import { afterAll, afterEach, beforeEach } from 'vitest'
 
-import { createDb, createSql, type Db, type Tx } from '@/db'
-import { requireDatabaseUrl } from '@/env'
+import { createDb, createSql, type Db, type Tx } from '#db/index'
+import { requireDatabaseUrl } from '#env'
 
 // One shared pool for the whole worker, created lazily so importing this
 // module doesn't open a connection for test files that never call setupTx().

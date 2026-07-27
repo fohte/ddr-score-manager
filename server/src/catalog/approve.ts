@@ -1,22 +1,22 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { err, ok, type Result, ResultAsync } from 'neverthrow'
 
-import { reevaluatePendingCharts } from '@/catalog/chart-approval'
-import { type CatalogError, CatalogPersistenceError } from '@/catalog/errors'
-import { runInTransaction } from '@/catalog/transaction'
-import { tryCatalog } from '@/catalog/try-catalog'
+import { reevaluatePendingCharts } from '#catalog/chart-approval'
+import { type CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import { runInTransaction } from '#catalog/transaction'
+import { tryCatalog } from '#catalog/try-catalog'
 import type {
   CatalogApproveRequest,
   CatalogApproveResponse,
   PendingCatalogResponse,
-} from '@/catalog/types'
-import type { Db } from '@/db'
+} from '#catalog/types'
+import type { Db } from '#db/index'
 import {
   chartSubmissions,
   musicCharts,
   musics,
   musicSubmissions,
-} from '@/db/schema'
+} from '#db/schema/index'
 
 export const approveCatalogEntries = (
   db: Db,
