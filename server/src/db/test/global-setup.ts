@@ -1,6 +1,6 @@
-import { createSql } from '@/db'
-import { runMigrations } from '@/db/migrations'
-import { requireDatabaseUrl } from '@/env'
+import { createSql } from '#db/index'
+import { runMigrations } from '#db/migrations'
+import { requireDatabaseUrl } from '#env'
 
 // Postgres itself is expected to already be running (docker compose locally,
 // GitHub Actions `services:` in CI) — this only applies migrations once for

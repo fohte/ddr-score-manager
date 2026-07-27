@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
-import { createCatalogService } from '@/catalog/catalog-service'
+import { createCatalogService } from '#catalog/catalog-service'
 import {
   getMusic,
   insertUser,
@@ -9,10 +9,10 @@ import {
   scoreListPage,
   scoreRow,
   uniqueAlnumId,
-} from '@/catalog/test/fixtures'
-import { runInTransaction } from '@/catalog/transaction'
-import { musicCharts, musics, musicSubmissions, user } from '@/db/schema'
-import { createTestDb } from '@/db/test/db'
+} from '#catalog/test/fixtures'
+import { runInTransaction } from '#catalog/transaction'
+import { musicCharts, musics, musicSubmissions, user } from '#db/schema/index'
+import { createTestDb } from '#db/test/db'
 
 const APPROVAL_THRESHOLD = 2
 

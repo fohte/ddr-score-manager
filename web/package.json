@@ -8,15 +8,11 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-<<<<<<< before updating
     "hono": "4.12.30",
+    "neverthrow": "8.2.0",
     "server": "workspace:*"
-||||||| last update
-=======
-    "neverthrow": "8.2.0"
->>>>>>> after updating
   },
   "imports": {
-  "#*": "./src/*.ts"
-}
+    "#*": "./src/*.ts"
+  }
 }

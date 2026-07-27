@@ -3,11 +3,11 @@ import { eq, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
-import { buildAuthOptions } from '@/auth'
-import { createSql } from '@/db'
-import { session, user } from '@/db/schema'
-import { requireDatabaseUrl } from '@/env'
-import { createLogger } from '@/logger'
+import { buildAuthOptions } from '#auth'
+import { createSql } from '#db/index'
+import { session, user } from '#db/schema/index'
+import { requireDatabaseUrl } from '#env'
+import { createLogger } from '#logger'
 
 // drizzle-orm's postgres-js driver patches type parsers on the client's
 // `.options` at construction time, which only the top-level pool client

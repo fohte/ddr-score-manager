@@ -10,8 +10,8 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 
-import { user } from '@/db/schema/auth'
-import { musicCharts } from '@/db/schema/catalog'
+import { user } from '#db/schema/auth'
+import { musicCharts } from '#db/schema/catalog'
 
 export const scoreRecords = pgTable(
   'score_records',

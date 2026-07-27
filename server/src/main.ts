@@ -1,11 +1,11 @@
 import { serve } from '@hono/node-server'
 import * as Sentry from '@sentry/node'
 
-import { createApp } from '@/app'
-import { observability } from '@/bootstrap'
-import { createSql, pingDb } from '@/db'
-import { loadEnv } from '@/env'
-import { createLogger } from '@/logger'
+import { createApp } from '#app'
+import { observability } from '#bootstrap'
+import { createSql, pingDb } from '#db/index'
+import { loadEnv } from '#env'
+import { createLogger } from '#logger'
 
 export const main = (): void => {
   const env = loadEnv()

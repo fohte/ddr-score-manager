@@ -8,68 +8,51 @@ When a change would push a file's non-test code past ~500 lines, split it along 
 
 Prefer creating a new focused file over appending to the largest existing one.
 
-<<<<<<< before updating
-## Testing
-||||||| last update
-=======
 ## Error handling rules
->>>>>>> after updating
 
-<<<<<<< before updating
-### Running tests
-||||||| last update
-=======
 ### Return a `Result` instead of throwing
->>>>>>> after updating
 
-<<<<<<< before updating
-```sh
-pnpm run test                 # all workspaces
-pnpm --filter server run test # server only (runs tsc --noEmit + vitest in parallel)
-```
-||||||| last update
-=======
 `errorHandling` in `eslint.config.js` bans `throw`/`try-catch` in production code and requires every returned `Result` to be consumed (`no-restricted-syntax`, `neverthrow/must-use-result` in `@fohte/eslint-config`). Return a `Result`/`ResultAsync` from [neverthrow](https://github.com/supermacro/neverthrow) instead:
->>>>>>> after updating
 
-<<<<<<< before updating
-### Server integration tests — database setup
-||||||| last update
-=======
 ```ts
 // bad: throws
 function parseConfig(raw: string): Config {
   if (!isValid(raw)) throw new Error('invalid config')
   return JSON.parse(raw)
 }
->>>>>>> after updating
 
-<<<<<<< before updating
-Server integration tests require PostgreSQL running via Docker.
-
-```sh
-mise run db:up                                                              # skip if already running
-docker compose exec db createdb -U ddr_score_manager ddr_score_manager_test # first time only
-||||||| last update
-=======
 // good: returns a Result
 function parseConfig(raw: string): Result<Config, ConfigError> {
   if (!isValid(raw)) return err(new ConfigError('invalid config'))
   return ok(JSON.parse(raw))
 }
->>>>>>> after updating
 ```
 
-<<<<<<< before updating
+Use `ResultAsync.fromPromise()` or `Result.fromThrowable()` to interop with a throwing API without a local try/catch. If the throw-based contract genuinely can't be wrapped that way, catch the exception, wrap it in a `BoundaryError` subclass (see `src/errors.ts`), and rethrow it — `no-restricted-syntax` bans `try`/`throw` as separate selectors, so both the `try` and the `throw` need their own `eslint-disable-next-line no-restricted-syntax` comment explaining why.
+
+## Testing
+
+### Running tests
+
+```sh
+pnpm run test                 # all workspaces
+pnpm --filter server run test # server only (runs tsc --noEmit + vitest in parallel)
+```
+
+### Server integration tests — database setup
+
+Server integration tests require PostgreSQL running via Docker.
+
+```sh
+mise run db:up                                                              # skip if already running
+docker compose exec db createdb -U ddr_score_manager ddr_score_manager_test # first time only
+```
+
 The Compose file uses a fixed project name (`ddr-score-manager-infra`), so the same PostgreSQL container is shared across all worktrees. Running `mise run db:up` from any worktree is safe and will not create duplicate containers — skip if already running for development.
 
 The `db` service publishes Postgres on a random host port to avoid clashing with other projects. `mise run db:up` resolves the assigned port and writes it to `.env.runtime` as both `DATABASE_URL` (`ddr_score_manager_dev`) and `TEST_DATABASE_URL` (`ddr_score_manager_test`); mise loads both automatically and `server`'s test runs prefer `TEST_DATABASE_URL`. Do not point `DATABASE_URL` at `ddr_score_manager_dev` for tests — existing data there causes test failures.
 
 Migrations are applied automatically by `server/src/db/test/global-setup.ts`.
-||||||| last update
-=======
-Use `ResultAsync.fromPromise()` or `Result.fromThrowable()` to interop with a throwing API without a local try/catch. If the throw-based contract genuinely can't be wrapped that way, catch the exception, wrap it in a `BoundaryError` subclass (see `src/errors.ts`), and rethrow it — `no-restricted-syntax` bans `try`/`throw` as separate selectors, so both the `try` and the `throw` need their own `eslint-disable-next-line no-restricted-syntax` comment explaining why.
->>>>>>> after updating
 
 ## Test code rules
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeTitle } from '@/catalog/normalize-title'
+import { normalizeTitle } from '#catalog/normalize-title'
 
 describe('normalizeTitle', () => {
   it('trims leading and trailing whitespace', () => {

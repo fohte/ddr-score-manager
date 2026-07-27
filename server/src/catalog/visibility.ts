@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm'
 import { ResultAsync } from 'neverthrow'
 
-import { type CatalogError, CatalogPersistenceError } from '@/catalog/errors'
-import type { Db, Tx } from '@/db'
-import { musics, musicSubmissions, scoreRecords } from '@/db/schema'
+import { type CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import type { Db, Tx } from '#db/index'
+import { musics, musicSubmissions, scoreRecords } from '#db/schema/index'
 
 // ScoreReadApi (曲別詳細の 404) と JacketService (ジャケットの 404) から共有される:
 // pending の楽曲は、自分のスコアまたは送信記録が紐づくユーザーにのみ可視とし、

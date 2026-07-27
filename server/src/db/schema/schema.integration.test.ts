@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { setupTx } from '@/db/test/db'
+import { setupTx } from '#db/test/db'
 
 // Postgres SQLSTATE error codes: https://www.postgresql.org/docs/current/errcodes-appendix.html
 const CHECK_VIOLATION = '23514'

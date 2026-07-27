@@ -5,27 +5,27 @@ import { err, ok, type Result, ResultAsync } from 'neverthrow'
 import {
   aggregateMusicUpdates,
   type MusicUpdate,
-} from '@/catalog/aggregate-music-updates'
+} from '#catalog/aggregate-music-updates'
 import {
   approveChartIfThresholdReached,
   reevaluatePendingCharts,
-} from '@/catalog/chart-approval'
-import { type CatalogError, CatalogPersistenceError } from '@/catalog/errors'
-import { normalizeTitle } from '@/catalog/normalize-title'
+} from '#catalog/chart-approval'
+import { type CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import { normalizeTitle } from '#catalog/normalize-title'
 import {
   coalesceApprovedAt,
   fillIfPendingAndNull,
   keepIfUndefined,
-} from '@/catalog/sql-helpers'
-import { tryCatalog } from '@/catalog/try-catalog'
-import type { CatalogRegisterInput } from '@/catalog/types'
-import type { Tx } from '@/db'
+} from '#catalog/sql-helpers'
+import { tryCatalog } from '#catalog/try-catalog'
+import type { CatalogRegisterInput } from '#catalog/types'
+import type { Tx } from '#db/index'
 import {
   chartSubmissions,
   musicCharts,
   musics,
   musicSubmissions,
-} from '@/db/schema'
+} from '#db/schema/index'
 
 interface MusicRow {
   id: string

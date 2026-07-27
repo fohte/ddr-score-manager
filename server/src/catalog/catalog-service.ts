@@ -1,10 +1,10 @@
 import {
   approveCatalogEntries,
   listPendingCatalogEntries,
-} from '@/catalog/approve'
-import { registerCatalogEntries } from '@/catalog/register'
-import type { CatalogService } from '@/catalog/types'
-import type { Db } from '@/db'
+} from '#catalog/approve'
+import { registerCatalogEntries } from '#catalog/register'
+import type { CatalogService } from '#catalog/types'
+import type { Db } from '#db/index'
 
 export const createCatalogService = (
   db: Db,

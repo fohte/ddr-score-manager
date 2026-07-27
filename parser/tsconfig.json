@@ -7,7 +7,6 @@
   "compilerOptions": {
     "module": "preserve",
     "moduleResolution": "bundler",
-<<<<<<< before updating
     "noEmit": true,
     // DOM 標準 API (Document, Element 等) の型のみが必要なため、
     // @tsconfig/node-lts の lib に DOM を追加する。
@@ -19,13 +18,5 @@
       "ESNext.Promise",
       "DOM"
     ]
-||||||| last update
-    "noEmit": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-=======
-    "noEmit": true
->>>>>>> after updating
   }
 }
