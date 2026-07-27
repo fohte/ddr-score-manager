@@ -1,6 +1,7 @@
 import { config } from '@fohte/eslint-config'
 
 export default config(
+<<<<<<< before updating
   {
     typescript: { typeChecked: true },
     errorHandling: {},
@@ -9,21 +10,13 @@ export default config(
   // cross-package type resolution), which makes `tsc --build` emit
   // declaration files under dist/ — exclude that build output from lint.
   { ignores: ['**/dist/**'] },
+||||||| last update
+  { typescript: { typeChecked: true } },
+=======
+>>>>>>> after updating
   {
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['./*', '../*'],
-              message:
-                'Please use absolute imports instead of relative imports.',
-            },
-          ],
-        },
-      ],
-    },
+    typescript: { typeChecked: true },
+    errorHandling: {},
   },
   {
     // vite.config.ts and vitest.config.ts are outside src/ where the @ alias is unavailable

@@ -14,9 +14,9 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "zod": "4.4.3"
+    "neverthrow": "8.2.0"
   },
   "devDependencies": {
-    "linkedom": "0.18.13"
-  }
+  "linkedom": "0.18.13"
+}
 }
