@@ -34,7 +34,7 @@
     "@sentry/opentelemetry": "10.63.0",
     "better-auth": "1.6.23",
     "drizzle-orm": "0.45.2",
-    "hono": "4.12.30",
+    "hono": "4.12.34",
     "neverthrow": "8.2.0",
     "pino": "10.3.1",
     "postgres": "3.4.9"

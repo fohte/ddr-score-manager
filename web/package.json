@@ -8,7 +8,7 @@
     "test:unit": "vitest run"
   },
   "dependencies": {
-    "hono": "4.12.30",
+    "hono": "4.12.34",
     "neverthrow": "8.2.0",
     "server": "workspace:*"
   },
