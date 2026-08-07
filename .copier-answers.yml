@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier
-_commit: v0.9.0
+_commit: v0.9.3
 _src_path: https://github.com/fohte/generic-boilerplate
 description: Score viewer and visualizer for DDR
 is_public: false
@@ -7,14 +7,14 @@ monorepo_node_workspace: true
 project_name: ddr-score-manager
 repo_language: en
 subpackages:
-  - name: server
+-   name: server
     type: node
     web_app: true
-  - name: web
+-   name: web
     type: node
-  - name: parser
+-   name: parser
     type: node
-  - name: bookmarklet
+-   name: bookmarklet
     type: node
 type: base
 use_release_please: false
