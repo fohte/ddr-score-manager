@@ -5,19 +5,10 @@
 // `--import @fohte/service-kit/otel-register` flag on the start/dev scripts
 // must preload it before this file (or anything else) is imported, or
 // `http.Server` is never patched.
-import { initObservabilityIfConfigured,
+import {
+  initObservabilityIfConfigured,
   type ObservabilityHandle,
 } from '@fohte/service-kit/observability'
 
-<<<<<<< before updating
 export const observability: ObservabilityHandle | undefined =
-  isObservabilityConfigured(process.env)
-    ? initObservability(process.env)
-    : undefined
-||||||| last update
-if (isObservabilityConfigured(process.env)) {
-  initObservability(process.env)
-}
-=======
-initObservabilityIfConfigured(process.env)
->>>>>>> after updating
+  initObservabilityIfConfigured(process.env)
