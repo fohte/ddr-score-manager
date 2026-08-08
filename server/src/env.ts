@@ -1,8 +1,16 @@
-import type { Level as PinoLevel } from 'pino'
+import {
+  type EnvSource,
+  EnvValidationError,
+  optionalEnum,
+  optionalInt,
+  optionalString,
+  parseEnv,
+  requireString,
+} from '@fohte/service-kit/env'
+import type { LogLevel as ServiceKitLogLevel } from '@fohte/service-kit/logger'
 
-// Pinned to pino's own Level union via `satisfies` so a future pino major
-// that changes the accepted levels fails to compile here instead of
-// silently drifting from what pino actually accepts.
+// Pinned to service-kit's own LogLevel union via `satisfies`, minus
+// 'silent' (this app has no use case for silencing logs entirely).
 const LOG_LEVELS = [
   'fatal',
   'error',
@@ -10,7 +18,7 @@ const LOG_LEVELS = [
   'info',
   'debug',
   'trace',
-] as const satisfies readonly PinoLevel[]
+] as const satisfies readonly ServiceKitLogLevel[]
 
 export type LogLevel = (typeof LOG_LEVELS)[number]
 
@@ -26,102 +34,39 @@ const DEFAULT_PORT = 3000
 const DEFAULT_LOG_LEVEL: LogLevel = 'info'
 const DEFAULT_CATALOG_APPROVAL_THRESHOLD = 2
 
-const isLogLevel = (value: string): value is LogLevel =>
-  (LOG_LEVELS as readonly string[]).includes(value)
-
-export class EnvError extends Error {
-  constructor(
-    public readonly issues: readonly string[],
-    message?: string,
-  ) {
-    super(message ?? `invalid environment: ${issues.join('; ')}`)
-    this.name = 'EnvError'
-  }
-}
-
-const missingEnvMessage = (key: string): string =>
-  `missing required env: ${key}`
+export { EnvValidationError }
 
 // Standalone from loadEnv/Env: src/db/migrate.ts only ever needs this one
 // var and must not fail on the rest of the app's required env.
-export const requireDatabaseUrl = (
-  source: Readonly<Record<string, string | undefined>> = process.env,
-): string => {
-  const raw = source['DATABASE_URL']
-  if (raw === undefined || raw === '') {
+export const requireDatabaseUrl = (source: EnvSource = process.env): string => {
+  const result = requireString(source, 'DATABASE_URL')
+  if (result.isErr()) {
     // eslint-disable-next-line no-restricted-syntax -- process bootstrap: fails fast on invalid env
-    throw new EnvError([missingEnvMessage('DATABASE_URL')])
+    throw new EnvValidationError([result.error])
   }
-  return raw
+  return result.value
 }
 
-export const loadEnv = (
-  source: Readonly<Record<string, string | undefined>> = process.env,
-): Env => {
-  const issues: string[] = []
-
-  const parseDatabaseUrl = (): string => {
-    const raw = source['DATABASE_URL']
-    if (raw === undefined || raw === '') {
-      issues.push(missingEnvMessage('DATABASE_URL'))
-      return ''
-    }
-    return raw
-  }
-
-  const parsePort = (): number => {
-    const raw = source['PORT']
-    if (raw === undefined) return DEFAULT_PORT
-    const parsed = Number(raw)
-    if (
-      raw === '' ||
-      !Number.isInteger(parsed) ||
-      parsed <= 0 ||
-      parsed > 65_535
-    ) {
-      issues.push(`PORT must be a valid TCP port (got: ${raw})`)
-      return DEFAULT_PORT
-    }
-    return parsed
-  }
-
-  const parseLogLevel = (): LogLevel => {
-    const raw = source['LOG_LEVEL']
-    if (raw === undefined) return DEFAULT_LOG_LEVEL
-    if (!isLogLevel(raw)) {
-      issues.push(
-        `LOG_LEVEL must be one of ${LOG_LEVELS.join(', ')} (got: ${raw})`,
-      )
-      return DEFAULT_LOG_LEVEL
-    }
-    return raw
-  }
-
-  const parseCatalogApprovalThreshold = (): number => {
-    const raw = source['CATALOG_APPROVAL_THRESHOLD']
-    if (raw === undefined) return DEFAULT_CATALOG_APPROVAL_THRESHOLD
-    const parsed = Number(raw)
-    if (raw === '' || !Number.isInteger(parsed) || parsed < 2) {
-      issues.push(
-        `CATALOG_APPROVAL_THRESHOLD must be an integer >= 2 (got: ${raw})`,
-      )
-      return DEFAULT_CATALOG_APPROVAL_THRESHOLD
-    }
-    return parsed
-  }
-
-  const env: Env = {
-    PORT: parsePort(),
-    LOG_LEVEL: parseLogLevel(),
-    DATABASE_URL: parseDatabaseUrl(),
-    CATALOG_TRUSTED_EMAILS: source['CATALOG_TRUSTED_EMAILS'] ?? '',
-    CATALOG_APPROVAL_THRESHOLD: parseCatalogApprovalThreshold(),
-  }
-
-  if (issues.length > 0) {
+export const loadEnv = (source: EnvSource = process.env): Env => {
+  const result = parseEnv({
+    PORT: optionalInt(source, 'PORT', DEFAULT_PORT, { min: 1, max: 65_535 }),
+    LOG_LEVEL: optionalEnum(source, 'LOG_LEVEL', LOG_LEVELS, DEFAULT_LOG_LEVEL),
+    DATABASE_URL: requireString(source, 'DATABASE_URL'),
+    CATALOG_TRUSTED_EMAILS: optionalString(
+      source,
+      'CATALOG_TRUSTED_EMAILS',
+      '',
+    ),
+    CATALOG_APPROVAL_THRESHOLD: optionalInt(
+      source,
+      'CATALOG_APPROVAL_THRESHOLD',
+      DEFAULT_CATALOG_APPROVAL_THRESHOLD,
+      { min: 2 },
+    ),
+  })
+  if (result.isErr()) {
     // eslint-disable-next-line no-restricted-syntax -- process bootstrap: fails fast on invalid env
-    throw new EnvError(issues)
+    throw result.error
   }
-
-  return env
+  return result.value
 }
