@@ -7,7 +7,7 @@ import {
   parseEnv,
   requireString,
 } from '@fohte/service-kit/env'
-import type { LogLevel } from '@fohte/service-kit/logger'
+import type { LogLevel as ServiceKitLogLevel } from '@fohte/service-kit/logger'
 
 // Pinned to service-kit's own LogLevel union via `satisfies`, minus
 // 'silent' (this app has no use case for silencing logs entirely).
@@ -18,7 +18,9 @@ const LOG_LEVELS = [
   'info',
   'debug',
   'trace',
-] as const satisfies readonly LogLevel[]
+] as const satisfies readonly ServiceKitLogLevel[]
+
+export type LogLevel = (typeof LOG_LEVELS)[number]
 
 export interface Env {
   PORT: number

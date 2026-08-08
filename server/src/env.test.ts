@@ -43,6 +43,25 @@ describe('loadEnv', () => {
     })
   })
 
+  // service-kit's optional parsers treat an empty string the same as an
+  // unset variable, falling back to the default instead of rejecting it.
+  it('treats an empty string as unset for optional fields and falls back to the default', () => {
+    expect(
+      loadEnv({
+        PORT: '',
+        LOG_LEVEL: '',
+        DATABASE_URL,
+        CATALOG_APPROVAL_THRESHOLD: '',
+      }),
+    ).toEqual({
+      PORT: 3000,
+      LOG_LEVEL: 'info',
+      DATABASE_URL,
+      CATALOG_TRUSTED_EMAILS: '',
+      CATALOG_APPROVAL_THRESHOLD: 2,
+    })
+  })
+
   it('rejects a non-numeric PORT', () => {
     expect(captureIssues(() => loadEnv({ PORT: 'abc', DATABASE_URL }))).toEqual(
       ['environment variable PORT must be an integer (got: abc)'],
