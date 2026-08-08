@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import type { Logger } from '@fohte/service-kit/logger'
 import { captureWithFingerprint } from '@fohte/service-kit/observability'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import type { Logger } from 'pino'
 
 export interface AppDeps {
   logger: Logger

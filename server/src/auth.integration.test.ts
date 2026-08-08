@@ -1,3 +1,4 @@
+import { createLogger } from '@fohte/service-kit/logger'
 import { betterAuth } from 'better-auth'
 import { eq, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -7,7 +8,6 @@ import { buildAuthOptions } from '#auth'
 import { createSql } from '#db/index'
 import { session, user } from '#db/schema/index'
 import { requireDatabaseUrl } from '#env'
-import { createLogger } from '#logger'
 
 // drizzle-orm's postgres-js driver patches type parsers on the client's
 // `.options` at construction time, which only the top-level pool client
@@ -23,7 +23,7 @@ const TEST_EMAILS = [
 describe('allowlist gating', () => {
   const sql = createSql(requireDatabaseUrl())
   const db = drizzle(sql)
-  const logger = createLogger('fatal')
+  const logger = createLogger({ level: 'fatal' })
 
   const deleteTestUsers = () =>
     db.delete(user).where(inArray(user.email, TEST_EMAILS))

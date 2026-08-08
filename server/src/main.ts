@@ -1,3 +1,4 @@
+import { createLogger } from '@fohte/service-kit/logger'
 import { serve } from '@hono/node-server'
 import * as Sentry from '@sentry/node'
 
@@ -5,11 +6,10 @@ import { createApp } from '#app'
 import { observability } from '#bootstrap'
 import { createSql, pingDb } from '#db/index'
 import { loadEnv } from '#env'
-import { createLogger } from '#logger'
 
 export const main = (): void => {
   const env = loadEnv()
-  const logger = createLogger(env.LOG_LEVEL)
+  const logger = createLogger({ level: env.LOG_LEVEL })
   const sql = createSql(env.DATABASE_URL)
   const app = createApp({ logger, checkDb: () => pingDb(sql) })
 

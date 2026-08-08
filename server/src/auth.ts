@@ -1,15 +1,14 @@
 import { apiKey } from '@better-auth/api-key'
+import { createLogger, type Logger } from '@fohte/service-kit/logger'
 import { type Auth, betterAuth, type BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { eq } from 'drizzle-orm'
 import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js'
-import type { Logger } from 'pino'
 
 import { createAllowlistPolicy } from '#allowlist'
 import { createSql, PLACEHOLDER_DATABASE_URL } from '#db/index'
 import * as schema from '#db/schema/index'
-import { createLogger } from '#logger'
 
 const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7 // 7 days
 const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24 // 1 day (sliding refresh)
@@ -102,6 +101,6 @@ export const auth: Auth = betterAuth(
     googleClientId: process.env['GOOGLE_CLIENT_ID'] ?? '',
     googleClientSecret: process.env['GOOGLE_CLIENT_SECRET'] ?? '',
     allowedEmails: process.env['AUTH_ALLOWED_EMAILS'],
-    logger: createLogger('info'),
+    logger: createLogger({ level: 'info' }),
   }),
 )
