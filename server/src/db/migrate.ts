@@ -1,6 +1,6 @@
 import { createSql } from '#db/index'
 import { runMigrations } from '#db/migrations'
-import { EnvError, requireDatabaseUrl } from '#env'
+import { EnvValidationError, requireDatabaseUrl } from '#env'
 
 // infra runs this as `node dist/db/migrate.js` in an init container.
 const main = async (): Promise<void> => {
@@ -15,7 +15,7 @@ const main = async (): Promise<void> => {
 }
 
 main().catch((err: unknown) => {
-  if (err instanceof EnvError) {
+  if (err instanceof EnvValidationError) {
     for (const issue of err.issues) console.error(issue)
   } else {
     console.error(err)

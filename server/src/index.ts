@@ -2,14 +2,14 @@ import '#bootstrap'
 
 import * as Sentry from '@sentry/node'
 
-import { EnvError } from '#env'
+import { EnvValidationError } from '#env'
 import { main } from '#main'
 
 // eslint-disable-next-line no-restricted-syntax -- process entrypoint: catches startup failure to flush Sentry and exit with a nonzero code
 try {
   main()
 } catch (err) {
-  if (err instanceof EnvError) {
+  if (err instanceof EnvValidationError) {
     for (const issue of err.issues) console.error(issue)
   } else {
     console.error(err)
