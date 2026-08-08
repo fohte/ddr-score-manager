@@ -1,4 +1,4 @@
-import { createLogger } from '@fohte/service-kit/logger'
+import { noopLogger } from '@fohte/service-kit/logger'
 import { betterAuth } from 'better-auth'
 import { eq, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -23,7 +23,7 @@ const TEST_EMAILS = [
 describe('allowlist gating', () => {
   const sql = createSql(requireDatabaseUrl())
   const db = drizzle(sql)
-  const logger = createLogger({ level: 'fatal' })
+  const logger = noopLogger
 
   const deleteTestUsers = () =>
     db.delete(user).where(inArray(user.email, TEST_EMAILS))

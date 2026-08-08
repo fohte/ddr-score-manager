@@ -1,4 +1,4 @@
-import { createLogger } from '@fohte/service-kit/logger'
+import { createLogger, noopLogger } from '@fohte/service-kit/logger'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createApp } from '#app'
@@ -10,7 +10,7 @@ import { requireDatabaseUrl } from '#env'
 const sql = createSql(PLACEHOLDER_DATABASE_URL)
 
 const app = createApp({
-  logger: createLogger({ level: 'fatal' }),
+  logger: noopLogger,
   checkDb: () => pingDb(sql),
 })
 
@@ -63,7 +63,7 @@ describe('createApp', () => {
     it('returns 200 when the database is reachable', async () => {
       const reachableSql = createSql(requireDatabaseUrl())
       const healthyApp = createApp({
-        logger: createLogger({ level: 'fatal' }),
+        logger: noopLogger,
         checkDb: () => pingDb(reachableSql),
       })
       try {
@@ -78,7 +78,7 @@ describe('createApp', () => {
     it('returns 503 when the database is unreachable', async () => {
       const unreachableSql = createSql('postgresql://user:pass@127.0.0.1:1/db')
       const unhealthyApp = createApp({
-        logger: createLogger({ level: 'fatal' }),
+        logger: noopLogger,
         checkDb: () => pingDb(unreachableSql),
       })
       try {
