@@ -8,14 +8,14 @@ project_name: ddr-score-manager
 repo_id: ''
 repo_language: en
 subpackages:
--   name: server
+  - name: server
     type: node
     web_app: true
--   name: web
+  - name: web
     type: node
--   name: parser
+  - name: parser
     type: node
--   name: bookmarklet
+  - name: bookmarklet
     type: node
 type: base
 use_release_please: false
