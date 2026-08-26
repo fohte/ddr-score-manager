@@ -1,0 +1,6 @@
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: ^repo:fohte@11088009/ddr-score-manager@1298336894:ref:refs/heads/.+$
+claim_pattern:
+  job_workflow_ref: ^fohte/ddr-score-manager/\.github/workflows/test\.yml@[^@]+$
+permissions:
+  contents: write
