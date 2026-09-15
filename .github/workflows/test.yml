@@ -292,4 +292,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Run knip
+        env:
+          # knip statically loads server/drizzle.config.ts to resolve its
+          # schema path; that file requires DATABASE_URL to be set even
+          # though knip never opens a connection.
+          DATABASE_URL: postgresql://localhost:5432/placeholder
         run: pnpm exec knip
