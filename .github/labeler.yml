@@ -1,0 +1,12 @@
+scope/server:
+  - changed-files:
+      - any-glob-to-any-file: server/**
+scope/web:
+  - changed-files:
+      - any-glob-to-any-file: web/**
+scope/parser:
+  - changed-files:
+      - any-glob-to-any-file: parser/**
+scope/bookmarklet:
+  - changed-files:
+      - any-glob-to-any-file: bookmarklet/**

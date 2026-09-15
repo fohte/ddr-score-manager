@@ -20,7 +20,7 @@ const LOG_LEVELS = [
   'trace',
 ] as const satisfies readonly ServiceKitLogLevel[]
 
-export type LogLevel = (typeof LOG_LEVELS)[number]
+type LogLevel = (typeof LOG_LEVELS)[number]
 
 export interface Env {
   PORT: number

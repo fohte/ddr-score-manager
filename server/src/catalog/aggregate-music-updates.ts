@@ -4,7 +4,7 @@ import type {
   PlayStyle,
 } from '@fohte/ddr-score-manager-parser'
 
-export interface ChartUpdate {
+interface ChartUpdate {
   playStyle: PlayStyle
   difficulty: Difficulty
   level: number | undefined

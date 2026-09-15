@@ -19,5 +19,9 @@ export default defineConfig({
     // src/db/test/global-setup.ts. Postgres itself must already be running
     // (mise run db:up locally, GitHub Actions `services:` in CI).
     globalSetup: ['./src/db/test/global-setup.ts'],
+    // Spelled out (matching Vitest's own default) so knip's static analysis
+    // of this file can resolve test entry files; Vitest's own runtime
+    // behavior is unchanged.
+    include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'],
   },
 })
