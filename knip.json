@@ -7,9 +7,6 @@
     },
     "server": {
       "entry": ["src/auth.ts"]
-    },
-    "web": {
-      "entry": ["src/client.ts"]
     }
   }
 }
