@@ -15,17 +15,13 @@ if (resolvedDatabaseUrl != null) {
 
 export default defineConfig({
   test: {
-<<<<<<< before updating
     // Applies migrations once for the whole run against DATABASE_URL; see
     // src/db/test/global-setup.ts. Postgres itself must already be running
     // (mise run db:up locally, GitHub Actions `services:` in CI).
     globalSetup: ['./src/db/test/global-setup.ts'],
-||||||| last update
-  })
-=======
     // Spelled out (matching Vitest's own default) so knip's static analysis
     // of this file can resolve test entry files; Vitest's own runtime
     // behavior is unchanged.
     include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'],
->>>>>>> after updating
-  },})
+  },
+})

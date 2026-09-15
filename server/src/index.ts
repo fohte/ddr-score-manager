@@ -1,15 +1,7 @@
 import '#bootstrap'
 
-<<<<<<< before updating
 import * as Sentry from '@sentry/node'
-||||||| last update
-export const greet = (name: string): string => {
-  return `Hello, ${name}!`
-=======
-import { err, ok, type Result } from 'neverthrow'
->>>>>>> after updating
 
-<<<<<<< before updating
 import { EnvValidationError } from '#env'
 import { main } from '#main'
 
@@ -30,12 +22,4 @@ try {
   const { observability } = await import('#bootstrap')
   await observability?.shutdown()
   process.exit(1)
-||||||| last update
-export const greet = (name: string): string => {
-  return `Hello, ${name}!`
-=======
-export const greet = (name: string): Result<string, Error> => {
-  if (!name) return err(new Error('name must not be empty'))
-  return ok(`Hello, ${name}!`)
->>>>>>> after updating
 }
