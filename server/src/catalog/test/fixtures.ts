@@ -29,7 +29,7 @@ export const scoreListPage = (rows: ParsedScoreRow[]): ParsedPage => ({
   rows,
 })
 
-export const musicDetail = (
+const musicDetail = (
   overrides: Partial<ParsedMusicDetail> = {},
 ): ParsedMusicDetail => ({
   musicId: 'abc123',
