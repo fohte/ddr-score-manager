@@ -18,7 +18,7 @@ export function resolveTestDatabaseUrl(
     return currentDatabaseUrl
   }
 
-  // mise が設定する開発 DB の URL だけを置き換え、明示された URL は優先する。
+  // TEST_DATABASE_URL が設定されている場合、開発 DB のパスを指す URL を置き換える。
   if (
     currentDatabaseUrl == null ||
     currentDatabaseUrl === '' ||

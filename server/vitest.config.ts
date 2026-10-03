@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 import { resolveTestDatabaseUrl } from './src/resolve-test-database-url'
 
-// mise が設定する開発 DB の URL を、テスト用 DB の URL に置き換える。
+// 開発 DB のパスを指す URL を、テスト用 DB の URL に置き換える。
 const resolvedDatabaseUrl = resolveTestDatabaseUrl(
   process.env['DATABASE_URL'],
   process.env['TEST_DATABASE_URL'],

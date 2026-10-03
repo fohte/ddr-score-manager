@@ -7,7 +7,7 @@
   },
   "scripts": {
     "test": "conc pnpm:test:type pnpm:test:unit",
-    "test:type": "tsc --noEmit",
+    "test:type": "tsc --build",
     "test:unit": "vitest run"
   },
   "dependencies": {
