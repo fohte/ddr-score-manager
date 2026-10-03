@@ -2,9 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 import { resolveTestDatabaseUrl } from './src/resolve-test-database-url'
 
-// mise's [env] loads DATABASE_URL from .env.runtime pointed at
-// ddr_score_manager_dev; tests must use ddr_score_manager_test instead, so
-// prefer TEST_DATABASE_URL when it is set.
+// mise が設定する開発 DB の URL を、テスト用 DB の URL に置き換える。
 const resolvedDatabaseUrl = resolveTestDatabaseUrl(
   process.env['DATABASE_URL'],
   process.env['TEST_DATABASE_URL'],
@@ -15,9 +13,8 @@ if (resolvedDatabaseUrl != null) {
 
 export default defineConfig({
   test: {
-    // Applies migrations once for the whole run against DATABASE_URL; see
-    // src/db/test/global-setup.ts. Postgres itself must already be running
-    // (mise run db:up locally, GitHub Actions `services:` in CI).
+    // 実行全体の migration は src/db/test/global-setup.ts で適用する。
+    // PostgreSQL はローカルと CI のどちらも mise run db:up で起動する。
     globalSetup: ['./src/db/test/global-setup.ts'],
     // Spelled out (matching Vitest's own default) so knip's static analysis
     // of this file can resolve test entry files; Vitest's own runtime

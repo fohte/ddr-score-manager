@@ -1,0 +1,119 @@
+name: 'ddr-score-manager server'
+docPath: docs/db
+# Fixed names keep the disposable database name out of generated headings.
+# schema.json includes architecture-specific database_version values.
+disableOutputSchema: true
+er:
+  format: mermaid
+exclude: ['drizzle.*']
+lint:
+  requireTableComment:
+    enabled: true
+  requireColumnComment:
+    enabled: true
+    exclude: [id, created_at, updated_at]
+comments:
+  - table: account
+    tableComment: 'Better Auth が管理する外部認証アカウントと認証情報。'
+    columnComments:
+      account_id: '認証プロバイダー内でアカウントを識別する値。'
+      provider_id: '認証プロバイダーの識別子。'
+      user_id: 'この認証アカウントを所有するユーザー。'
+      access_token: '認証プロバイダーのアクセストークン。'
+      refresh_token: '認証プロバイダーのリフレッシュトークン。'
+      id_token: '認証プロバイダーの ID トークン。'
+      access_token_expires_at: 'アクセストークンの有効期限。'
+      refresh_token_expires_at: 'リフレッシュトークンの有効期限。'
+      scope: '認証時に要求した権限の範囲。'
+      password: 'パスワード認証に使う値。'
+  - table: apikey
+    tableComment: 'Better Auth API key plugin が管理する API キー。'
+    columnComments:
+      config_id: 'API キーが属する設定の識別子。'
+      name: 'API キーの名前。'
+      start: '画面で識別するために表示する API キーの先頭文字列。'
+      reference_id: 'API キーを所有する対象の ID。'
+      prefix: 'API キーの接頭辞。ハッシュ化せず保存する。'
+      key: 'API キーのハッシュ値。'
+      refill_interval: '利用回数を補充する間隔。単位はミリ秒。'
+      refill_amount: '利用回数を補充するときに加算する回数。'
+      last_refill_at: '利用枠を最後に補充した時刻。'
+      enabled: 'API キーが有効かどうか。'
+      rate_limit_enabled: 'レート制限が有効かどうか。'
+      rate_limit_time_window: 'レート制限を適用する時間幅。単位はミリ秒。'
+      rate_limit_max: '時間幅内に許可する最大リクエスト数。'
+      request_count: '時間幅内に記録されたリクエスト数。'
+      remaining: '失効までの残り利用回数。null は回数制限なし。'
+      last_request: 'API キーが最後に使われた時刻。'
+      expires_at: 'API キーの有効期限。'
+      permissions: 'API キーに設定した権限。既定値は upload の create。'
+      metadata: 'API キーに付けた追加情報。'
+  - table: chart_submissions
+    tableComment: '未承認の譜面に対するユーザーごとの登録記録。'
+    columnComments:
+      music_id: '登録対象の楽曲。'
+      play_style: '譜面のプレイスタイル。sp または dp。'
+      difficulty: '譜面の難易度。'
+      user_id: '譜面を登録したユーザー。'
+  - table: music_charts
+    tableComment: '楽曲ごとのプレイスタイル・難易度別譜面と承認状態。'
+    columnComments:
+      music_id: 'この譜面が属する楽曲。'
+      play_style: '譜面のプレイスタイル。sp または dp。'
+      difficulty: '譜面の難易度。'
+      level: '譜面のレベル。1 から 19 まで。'
+      status: '譜面の状態。pending または approved。'
+      approved_at: '譜面が承認された時刻。未承認の場合は null。'
+  - table: music_jackets
+    tableComment: '楽曲に紐づくジャケット画像データ。'
+    columnComments:
+      music_id: '画像が属する楽曲。'
+      content: 'ジャケット画像のバイナリデータ。'
+      content_type: '画像データのメディアタイプ。'
+      fetched_at: '画像データを取得した時刻。'
+  - table: music_submissions
+    tableComment: '楽曲ごとにユーザーが行った登録内容の記録。'
+    columnComments:
+      music_id: '登録内容が属する楽曲。'
+      user_id: '楽曲を登録したユーザー。'
+      title_normalized: '登録時のタイトルを照合用に正規化した値。'
+  - table: musics
+    tableComment: 'DDR 楽曲のカタログと承認状態。'
+    columnComments:
+      title: '楽曲のタイトル。'
+      artist: '楽曲のアーティスト名。'
+      status: '楽曲の状態。pending または approved。'
+      approved_at: '楽曲が承認された時刻。未承認の場合は null。'
+  - table: score_records
+    tableComment: 'ユーザーが登録した譜面ごとのスコア記録。'
+    columnComments:
+      user_id: 'スコアを記録したユーザー。'
+      music_id: 'スコア対象の楽曲。'
+      play_style: 'スコア対象譜面のプレイスタイル。'
+      difficulty: 'スコア対象譜面の難易度。'
+      score: '譜面のスコア。0 から 1,000,000 まで。'
+      rank: 'スコア記録に含まれる DDR ランク値。'
+      clear_type: 'スコア記録に含まれるクリア種別。未クリアは null。'
+      flare_rank: 'スコア記録に含まれるフレアランク。未設定は null。'
+      recorded_at: 'スコアレコードを作成した時刻。既定値はデータベースの現在時刻。'
+  - table: session
+    tableComment: 'Better Auth が管理するログインセッション。'
+    columnComments:
+      expires_at: 'セッションの有効期限。'
+      token: 'セッションの認証トークン。'
+      ip_address: 'セッション作成時の IP アドレス。'
+      user_agent: 'セッション作成時の User-Agent。'
+      user_id: 'セッションを所有するユーザー。'
+  - table: user
+    tableComment: 'Better Auth が管理する認証ユーザー。'
+    columnComments:
+      name: 'ユーザー名。'
+      email: 'ユーザーのメールアドレス。'
+      email_verified: 'メールアドレスが確認済みかどうか。'
+      image: 'ユーザー画像の URL。'
+  - table: verification
+    tableComment: 'Better Auth の検証処理で使う値と有効期限。'
+    columnComments:
+      identifier: '検証対象を識別する値。'
+      value: '検証に使う値。'
+      expires_at: '検証値の有効期限。'

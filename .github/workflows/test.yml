@@ -42,7 +42,7 @@ jobs:
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2026.9.5
+          version: 2026.9.14
 
       # corepack creates the pnpm executable inside mise's node install bin
       # directory; reshim so the mise shims dir (which is on PATH) picks it up.
@@ -66,6 +66,26 @@ jobs:
 
       - name: Check peer dependencies
         run: pnpm peers check
+
+      - name: Check for database documentation changes
+        id: db-doc-changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            server/drizzle/**
+            **/.tbls.yml
+            scripts/db-*
+            compose*.yaml
+            .mise.toml
+            .github/workflows/test.yml
+
+      - name: Generate database documentation
+        if: steps.db-doc-changes.outputs.any_changed == 'true'
+        run: mise run db:doc
+
+      - name: Stage generated database documentation
+        if: steps.db-doc-changes.outputs.any_changed == 'true'
+        run: git add -- server/docs/db
 
       - name: Run lefthook
         id: lefthook
@@ -162,29 +182,12 @@ jobs:
         package: ${{ fromJSON(needs.setup.outputs.packages) }}
     name: 'unit-test (${{ matrix.package }})'
     runs-on: ubuntu-latest
-    # The `server` package's integration tests need PostgreSQL. The matrix legs share
-    # one job definition, so this service starts for every package — harmless idle
-    # cost for the other legs, but avoids forking the job.
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: ddr_score_manager
-          POSTGRES_PASSWORD: ddr_score_manager
-          POSTGRES_DB: ddr_score_manager_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U ddr_score_manager"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2026.9.5
+          version: 2026.9.14
 
       # corepack creates the pnpm executable inside mise's node install bin
       # directory; reshim so the mise shims dir (which is on PATH) picks it up.
@@ -242,11 +245,18 @@ jobs:
           done
           pnpm install "${filters[@]}" --frozen-lockfile
 
+      - name: Start PostgreSQL for server tests
+        if: matrix.package == 'server'
+        run: mise run db:up
+
+      - name: Resolve server database URLs
+        if: matrix.package == 'server'
+        run: |
+          echo "DATABASE_URL=$(scripts/db-url server dev)" >> "$GITHUB_ENV"
+          echo "TEST_DATABASE_URL=$(scripts/db-url server test)" >> "$GITHUB_ENV"
+
       - name: Run tests
         working-directory: ${{ matrix.package }}
-        env:
-          # The server leg's integration tests need this; harmless no-op for other legs.
-          DATABASE_URL: postgresql://ddr_score_manager:ddr_score_manager@localhost:5432/ddr_score_manager_test
         run: pnpm run test
 
   # Fixed name for branch protection: matrix leg names are dynamic, and knip
@@ -269,7 +279,7 @@ jobs:
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
-          version: 2026.9.5
+          version: 2026.9.14
 
       # corepack creates the pnpm executable inside mise's node install bin
       # directory; reshim so the mise shims dir (which is on PATH) picks it up.
@@ -292,9 +302,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Run knip
-        env:
-          # knip statically loads server/drizzle.config.ts to resolve its
-          # schema path; that file requires DATABASE_URL to be set even
-          # though knip never opens a connection.
-          DATABASE_URL: postgresql://localhost:5432/placeholder
         run: pnpm exec knip

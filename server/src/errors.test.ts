@@ -4,14 +4,20 @@ import { BoundaryError } from '#errors'
 
 class TaskStorePersistenceError extends BoundaryError {}
 
+const getErrorDetails = (error: Error) => [
+  error.name,
+  error.message,
+  error.cause,
+]
+
 describe('BoundaryError', () => {
-  it('derives name from the subclass and preserves the original error as cause', () => {
+  it('preserves the subclass name, message, and original cause', () => {
     const original = new Error('connection refused')
-
     const wrapped = new TaskStorePersistenceError('failed to save', original)
-
-    expect(wrapped.name).toBe('TaskStorePersistenceError')
-    expect(wrapped.message).toBe('failed to save')
-    expect(wrapped.cause).toBe(original)
+    expect(getErrorDetails(wrapped)).toEqual([
+      'TaskStorePersistenceError',
+      'failed to save',
+      original,
+    ])
   })
 })

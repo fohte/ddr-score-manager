@@ -1,8 +1,6 @@
-const DEV_DATABASE_PATH = '/ddr_score_manager_dev'
+const DEV_DATABASE_PATH = '/ddr-score-manager_server_dev'
 
-// Parses the URL instead of doing a substring search, so a query/fragment
-// value that happens to contain `/ddr_score_manager_dev` (e.g. a
-// `search_path` option) can't be mistaken for the path itself.
+// URL の pathname を解析し、query や fragment の同じ文字列を誤認しない。
 function pointsAtDevDatabase(url: string): boolean {
   // eslint-disable-next-line no-restricted-syntax -- interops with the URL constructor's throw-based contract for invalid input
   try {
@@ -20,9 +18,7 @@ export function resolveTestDatabaseUrl(
     return currentDatabaseUrl
   }
 
-  // Only override the mise-injected ddr_score_manager_dev default; an
-  // explicit DATABASE_URL set for this invocation (e.g.
-  // `DATABASE_URL=... pnpm test`) wins.
+  // mise が設定する開発 DB の URL だけを置き換え、明示された URL は優先する。
   if (
     currentDatabaseUrl == null ||
     currentDatabaseUrl === '' ||
