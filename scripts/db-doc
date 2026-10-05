@@ -14,7 +14,7 @@ drop_database() {
   fi
 
   docker compose exec -T db dropdb \
-    --username "ddr-score-manager" \
+    --username "ddr_score_manager" \
     --if-exists \
     --force \
     "$current_database_name"
@@ -59,13 +59,13 @@ run_db_doc() {
   fi
 
   if [[ "$package" == "." ]]; then
-    current_database_name="ddr-score-manager_doc_$$"
+    current_database_name="ddr_score_manager_doc_$$"
   else
-    current_database_name="ddr-score-manager_doc_${package}_$$"
+    current_database_name="ddr_score_manager_doc_${package//-/_}_$$"
   fi
 
   docker compose exec -T db createdb \
-    --username "ddr-score-manager" \
+    --username "ddr_score_manager" \
     "$current_database_name"
 
   local database_url
