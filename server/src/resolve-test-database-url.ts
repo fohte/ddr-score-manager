@@ -1,4 +1,4 @@
-const DEV_DATABASE_PATH = '/ddr-score-manager_server_dev'
+const DEV_DATABASE_PATH = '/ddr_score_manager_server_dev'
 
 // URL の pathname を解析し、query や fragment の同じ文字列を誤認しない。
 function pointsAtDevDatabase(url: string): boolean {

@@ -43,7 +43,7 @@ pnpm --filter server run db:generate
 
 #### サーバーの統合テスト
 
-サーバーの統合テストには、起動中の PostgreSQL と専用のテスト用データベース (`ddr-score-manager_server_test`) が必要である。
+サーバーの統合テストには、起動中の PostgreSQL と専用のテスト用データベース (`ddr_score_manager_server_test`) が必要である。
 
 ```sh
 # PostgreSQL と開発用・テスト用データベースを起動する
