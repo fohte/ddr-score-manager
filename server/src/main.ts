@@ -1,17 +1,35 @@
 import { createLogger } from '@fohte/service-kit/logger'
 import { serve } from '@hono/node-server'
 import * as Sentry from '@sentry/node'
+import { eq } from 'drizzle-orm'
 
 import { createApp } from '#app'
+import { auth } from '#auth'
 import { observability } from '#bootstrap'
-import { createSql, pingDb } from '#db/index'
+import { createDb, createSql, pingDb } from '#db/index'
+import { apikey } from '#db/schema/index'
 import { loadEnv } from '#env'
 
 export const main = (): void => {
   const env = loadEnv()
   const logger = createLogger({ level: env.LOG_LEVEL })
   const sql = createSql(env.DATABASE_URL)
-  const app = createApp({ logger, checkDb: () => pingDb(sql) })
+  const db = createDb(sql)
+  const app = createApp({
+    allowedEmails: process.env['AUTH_ALLOWED_EMAILS'],
+    authHandler: auth.handler,
+    checkDb: () => pingDb(sql),
+    getApiKeyPermissions: async (apiKeyId) => {
+      const [apiKey] = await db
+        .select({ permissions: apikey.permissions })
+        .from(apikey)
+        .where(eq(apikey.id, apiKeyId))
+        .limit(1)
+      return apiKey?.permissions ?? null
+    },
+    getSession: (headers) => auth.api.getSession({ headers }),
+    logger,
+  })
 
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     logger.info({ port: info.port }, 'server listening')

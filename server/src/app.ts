@@ -6,8 +6,15 @@ import { captureWithFingerprint } from '@fohte/service-kit/observability'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 
-export interface AppDeps {
+import {
+  type AuthMiddlewareDeps,
+  type AuthMiddlewareEnvironment,
+  createAuthMiddleware,
+} from '#auth-middleware'
+
+export interface AppDeps extends AuthMiddlewareDeps {
   logger: Logger
+  authHandler: (request: Request) => Promise<Response>
   // A function rather than a `Sql` client directly: `AppType` below is
   // consumed cross-package for Hono RPC typing, and importing `#db` here
   // would drag its module graph into consumers that don't share this
@@ -25,7 +32,7 @@ const STATIC_ROOT = path.resolve(
 const UNHANDLED_ERROR_FINGERPRINT = 'app.hono.unhandled-error'
 
 export const createApp = (deps: AppDeps) => {
-  const app = new Hono()
+  const app = new Hono<AuthMiddlewareEnvironment>()
 
   app.use('*', async (c, next) => {
     const start = Date.now()
@@ -55,6 +62,11 @@ export const createApp = (deps: AppDeps) => {
   const routes = app.get('/api/health', (c) =>
     c.json({ status: 'ok' } as const),
   )
+
+  // Hono は先に登録した handler を優先するため、認証 endpoint を middleware より先に置く。
+  app.all('/api/auth', (c) => deps.authHandler(c.req.raw))
+  app.all('/api/auth/*', (c) => deps.authHandler(c.req.raw))
+  app.use('/api/*', createAuthMiddleware(deps))
 
   // Not part of the typed RPC surface: a plain readiness probe for
   // orchestrators, not an API endpoint consumed by the web client.

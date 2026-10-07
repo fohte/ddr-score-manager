@@ -4,7 +4,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
-import { buildAuthOptions } from '#auth'
+import { buildAuthOptions } from '#auth-options'
 import { createSql } from '#db/index'
 import { session, user } from '#db/schema/index'
 import { requireDatabaseUrl } from '#env'
