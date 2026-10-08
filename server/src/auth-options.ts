@@ -4,9 +4,9 @@ import type { BetterAuthOptions } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { APIError } from 'better-auth/api'
 import { eq } from 'drizzle-orm'
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 import { createAllowlistPolicy } from '#allowlist'
+import type { Db } from '#db/index'
 import * as schema from '#db/schema/index'
 
 const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 7 // 7 days
@@ -15,8 +15,8 @@ const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24 // 1 day (sliding refresh)
 // セッション更新後や API キー発行後も、middleware が allowlist を毎回確認する。
 const API_KEY_PERMISSIONS = { upload: ['create'] }
 
-interface AuthDeps {
-  db: PostgresJsDatabase
+export interface AuthDeps {
+  db: Db
   googleClientId: string
   googleClientSecret: string
   allowedEmails: string | undefined
@@ -78,6 +78,11 @@ export const buildAuthOptions = (deps: AuthDeps): BetterAuthOptions => {
     plugins: [
       apiKey({
         enableSessionForAPIKeys: true,
+        rateLimit: {
+          enabled: true,
+          timeWindow: 24 * 60 * 60 * 1000,
+          maxRequests: 1_000,
+        },
         permissions: {
           defaultPermissions: () => API_KEY_PERMISSIONS,
         },

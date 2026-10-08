@@ -1,4 +1,5 @@
 import { noopLogger } from '@fohte/service-kit/logger'
+import { APIError } from 'better-auth/api'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -23,14 +24,27 @@ const responseOutput = async (response: Response) => ({
   body: await response.json(),
 })
 
+const responseWithSessionLookupCount = async (
+  response: Response,
+  sessionLookupCount: number,
+) => ({
+  response: await responseOutput(response),
+  sessionLookupCount,
+})
+
 const createTestApp = (
   options: {
     allowedEmails?: string
     apiKeyPermissions?: string | null
+    apiKeyPermissionsError?: Error
+    sessionError?: Error
   } = {},
 ) => {
   const app = new Hono<AuthMiddlewareEnvironment>()
   const getSession = vi.fn((headers: Headers) => {
+    if (options.sessionError !== undefined) {
+      return Promise.reject(options.sessionError)
+    }
     if (headers.get('x-api-key') === 'valid-api-key') {
       return Promise.resolve(API_KEY_SESSION)
     }
@@ -39,13 +53,16 @@ const createTestApp = (
     }
     return Promise.resolve(null)
   })
-  const getApiKeyPermissions = vi.fn(() =>
-    Promise.resolve(
+  const getApiKeyPermissions = vi.fn(() => {
+    if (options.apiKeyPermissionsError !== undefined) {
+      return Promise.reject(options.apiKeyPermissionsError)
+    }
+    return Promise.resolve(
       options.apiKeyPermissions === undefined
         ? '{"upload":["create"]}'
         : options.apiKeyPermissions,
-    ),
-  )
+    )
+  })
 
   app.use(
     '/api/*',
@@ -90,16 +107,57 @@ describe('createAuthMiddleware', () => {
   })
 
   it('rejects an API-key mock session on a read request', async () => {
-    const { app } = createTestApp()
+    const { app, getSession } = createTestApp()
 
     const response = await app.request('/api/scores', {
       headers: { 'x-api-key': 'valid-api-key' },
     })
 
+    expect(
+      await responseWithSessionLookupCount(
+        response,
+        getSession.mock.calls.length,
+      ),
+    ).toEqual({
+      response: {
+        status: 401,
+        contentType: 'application/json',
+        body: { error: 'Unauthorized' },
+      },
+      sessionLookupCount: 0,
+    })
+  })
+
+  it('returns 429 when API-key authentication is rate limited', async () => {
+    const { app } = createTestApp({
+      sessionError: new APIError('TOO_MANY_REQUESTS', {
+        message: 'rate limited',
+      }),
+    })
+
+    const response = await app.request('/api/scores/upload', {
+      method: 'POST',
+      headers: { 'x-api-key': 'valid-api-key' },
+    })
+
     expect(await responseOutput(response)).toEqual({
-      status: 401,
+      status: 429,
       contentType: 'application/json',
-      body: { error: 'Unauthorized' },
+      body: { error: 'Too Many Requests' },
+    })
+  })
+
+  it('returns 500 when session lookup fails unexpectedly', async () => {
+    const { app } = createTestApp({
+      sessionError: new Error('database unavailable'),
+    })
+
+    const response = await app.request('/api/scores')
+
+    expect(await responseOutput(response)).toEqual({
+      status: 500,
+      contentType: 'application/json',
+      body: { error: 'Internal Server Error' },
     })
   })
 
@@ -130,6 +188,23 @@ describe('createAuthMiddleware', () => {
       status: 401,
       contentType: 'application/json',
       body: { error: 'Unauthorized' },
+    })
+  })
+
+  it('returns 500 when API-key permissions cannot be loaded', async () => {
+    const { app } = createTestApp({
+      apiKeyPermissionsError: new Error('database unavailable'),
+    })
+
+    const response = await app.request('/api/scores/upload', {
+      method: 'POST',
+      headers: { 'x-api-key': 'valid-api-key' },
+    })
+
+    expect(await responseOutput(response)).toEqual({
+      status: 500,
+      contentType: 'application/json',
+      body: { error: 'Internal Server Error' },
     })
   })
 

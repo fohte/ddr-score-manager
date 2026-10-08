@@ -1,18 +1,17 @@
 import { noopLogger } from '@fohte/service-kit/logger'
-import { betterAuth } from 'better-auth'
-import { eq, inArray } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { inArray } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
+import { createApiKeyPermissionsLookup } from '#api-key-permissions'
 import { createApp } from '#app'
+import { createAuth } from '#auth'
 import {
   type AuthMiddlewareEnvironment,
   createAuthMiddleware,
 } from '#auth-middleware'
-import { buildAuthOptions } from '#auth-options'
-import { createSql } from '#db/index'
-import { apikey, user } from '#db/schema/index'
+import { createDb, createSql } from '#db/index'
+import { user } from '#db/schema/index'
 import { requireDatabaseUrl } from '#env'
 
 const TEST_EMAILS = ['middleware@example.test', 'another-reader@example.test']
@@ -40,7 +39,7 @@ const normalizeUserId = (body: unknown): unknown => {
 
 describe('authentication middleware integration', () => {
   const sql = createSql(requireDatabaseUrl())
-  const db = drizzle(sql)
+  const db = createDb(sql)
 
   const deleteTestUsers = () =>
     db.delete(user).where(inArray(user.email, TEST_EMAILS))
@@ -52,29 +51,23 @@ describe('authentication middleware integration', () => {
     await sql.end({ timeout: 5 })
   })
 
-  const createTestAuth = (allowedEmails: string) =>
-    betterAuth({
-      ...buildAuthOptions({
+  const createTestAuth = (
+    allowedEmails: string,
+    options: { autoSignIn: boolean } = { autoSignIn: true },
+  ) =>
+    createAuth(
+      {
         db,
         googleClientId: 'test-client-id',
         googleClientSecret: 'test-client-secret',
         allowedEmails,
         logger: noopLogger,
-      }),
-      emailAndPassword: { enabled: true, autoSignIn: true },
-    })
+      },
+      { emailAndPassword: { enabled: true, autoSignIn: options.autoSignIn } },
+    )
 
   const createExistingUser = async (email: string) => {
-    const auth = betterAuth({
-      ...buildAuthOptions({
-        db,
-        googleClientId: 'test-client-id',
-        googleClientSecret: 'test-client-secret',
-        allowedEmails: email,
-        logger: noopLogger,
-      }),
-      emailAndPassword: { enabled: true, autoSignIn: false },
-    })
+    const auth = createTestAuth(email, { autoSignIn: false })
 
     await auth.api.signUpEmail({
       body: { email, password: PASSWORD, name: 'Test User' },
@@ -104,9 +97,13 @@ describe('authentication middleware integration', () => {
       typeof keyData === 'object' &&
       keyData !== null &&
       'key' in keyData &&
-      typeof keyData.key === 'string'
+      typeof keyData.key === 'string' &&
+      keyData.key.length > 0
         ? keyData.key
-        : ''
+        : null
+
+    if (apiKey === null)
+      throw new Error('Better Auth did not create a test API key')
 
     return {
       apiKey,
@@ -123,14 +120,7 @@ describe('authentication middleware integration', () => {
       '/api/*',
       createAuthMiddleware({
         allowedEmails,
-        getApiKeyPermissions: async (apiKeyId) => {
-          const [row] = await db
-            .select({ permissions: apikey.permissions })
-            .from(apikey)
-            .where(eq(apikey.id, apiKeyId))
-            .limit(1)
-          return row?.permissions ?? null
-        },
+        getApiKeyPermissions: createApiKeyPermissionsLookup(db),
         getSession: (headers) => auth.api.getSession({ headers }),
         logger: noopLogger,
       }),
@@ -223,7 +213,7 @@ describe('authentication middleware integration', () => {
       allowedEmails: ALLOWED_EMAIL,
       authHandler: auth.handler,
       checkDb: () => Promise.resolve(),
-      getApiKeyPermissions: () => Promise.resolve(null),
+      getApiKeyPermissions: createApiKeyPermissionsLookup(db),
       getSession: (headers) => auth.api.getSession({ headers }),
       logger: noopLogger,
     })

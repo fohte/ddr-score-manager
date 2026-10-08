@@ -1,11 +1,10 @@
 import { noopLogger } from '@fohte/service-kit/logger'
 import { betterAuth } from 'better-auth'
 import { eq, inArray } from 'drizzle-orm'
-import { drizzle } from 'drizzle-orm/postgres-js'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildAuthOptions } from '#auth-options'
-import { createSql } from '#db/index'
+import { createDb, createSql } from '#db/index'
 import { session, user } from '#db/schema/index'
 import { requireDatabaseUrl } from '#env'
 
@@ -22,7 +21,7 @@ const TEST_EMAILS = [
 
 describe('allowlist gating', () => {
   const sql = createSql(requireDatabaseUrl())
-  const db = drizzle(sql)
+  const db = createDb(sql)
   const logger = noopLogger
 
   const deleteTestUsers = () =>

@@ -1,13 +1,12 @@
 import { createLogger } from '@fohte/service-kit/logger'
 import { serve } from '@hono/node-server'
 import * as Sentry from '@sentry/node'
-import { eq } from 'drizzle-orm'
 
+import { createApiKeyPermissionsLookup } from '#api-key-permissions'
 import { createApp } from '#app'
-import { auth } from '#auth'
+import { createAuth } from '#auth'
 import { observability } from '#bootstrap'
 import { createDb, createSql, pingDb } from '#db/index'
-import { apikey } from '#db/schema/index'
 import { loadEnv } from '#env'
 
 export const main = (): void => {
@@ -15,18 +14,19 @@ export const main = (): void => {
   const logger = createLogger({ level: env.LOG_LEVEL })
   const sql = createSql(env.DATABASE_URL)
   const db = createDb(sql)
+  const allowedEmails = env.AUTH_ALLOWED_EMAILS
+  const auth = createAuth({
+    db,
+    googleClientId: env.GOOGLE_CLIENT_ID,
+    googleClientSecret: env.GOOGLE_CLIENT_SECRET,
+    allowedEmails,
+    logger,
+  })
   const app = createApp({
-    allowedEmails: process.env['AUTH_ALLOWED_EMAILS'],
+    allowedEmails,
     authHandler: auth.handler,
     checkDb: () => pingDb(sql),
-    getApiKeyPermissions: async (apiKeyId) => {
-      const [apiKey] = await db
-        .select({ permissions: apikey.permissions })
-        .from(apikey)
-        .where(eq(apikey.id, apiKeyId))
-        .limit(1)
-      return apiKey?.permissions ?? null
-    },
+    getApiKeyPermissions: createApiKeyPermissionsLookup(db),
     getSession: (headers) => auth.api.getSession({ headers }),
     logger,
   })

@@ -2,7 +2,8 @@ import { createLogger, noopLogger } from '@fohte/service-kit/logger'
 import { describe, expect, it, vi } from 'vitest'
 
 import { type AppDeps, createApp } from '#app'
-import { createSql, pingDb, PLACEHOLDER_DATABASE_URL } from '#db/index'
+import { createSql, pingDb } from '#db/index'
+import { PLACEHOLDER_DATABASE_URL } from '#db/placeholder'
 import { requireDatabaseUrl } from '#env'
 
 // Never queried by the tests below, so postgres.js's lazy connection never

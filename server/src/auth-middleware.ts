@@ -61,13 +61,23 @@ export const createAuthMiddleware = (
     const isUploadRequest =
       c.req.method === 'POST' && c.req.path === '/api/scores/upload'
     const hasApiKey = c.req.header('x-api-key') !== undefined
+
+    if ((isUploadRequest && !hasApiKey) || (hasApiKey && !isUploadRequest)) {
+      return unauthorized(c)
+    }
+
     const sessionResult = await ResultAsync.fromPromise(
       deps.getSession(c.req.raw.headers),
       (error: unknown) => error,
     )
 
     if (sessionResult.isErr()) {
-      if (isAPIError(sessionResult.error)) return unauthorized(c)
+      if (isAPIError(sessionResult.error)) {
+        if (sessionResult.error.statusCode === 429) {
+          return c.json({ error: 'Too Many Requests' }, 429)
+        }
+        if (sessionResult.error.statusCode < 500) return unauthorized(c)
+      }
 
       deps.logger.error(
         { err: sessionResult.error },
@@ -77,12 +87,7 @@ export const createAuthMiddleware = (
     }
 
     const session = sessionResult.value
-    if (
-      session === null ||
-      (isUploadRequest && !hasApiKey) ||
-      (hasApiKey && !isUploadRequest) ||
-      !allowlist.isAllowed(session.user.email)
-    ) {
+    if (session === null || !allowlist.isAllowed(session.user.email)) {
       return unauthorized(c)
     }
 
