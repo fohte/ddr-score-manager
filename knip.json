@@ -7,7 +7,6 @@
     },
     "server": {
       "entry": [
-        "src/index.ts!",
         "src/main.ts!",
         "src/auth-cli.ts",
         "src/db/migrate.{ts,mts,cts}!"
