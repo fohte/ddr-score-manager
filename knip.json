@@ -10,7 +10,7 @@
         "src/index.ts!",
         "src/main.ts!",
         "src/auth-cli.ts",
-        "src/db/migrate.ts!"
+        "src/db/migrate.{ts,mts,cts}!"
       ],
       "project": [
         "src/**/*.ts!",
