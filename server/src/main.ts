@@ -6,8 +6,11 @@ import { createApiKeyPermissionsLookup } from '#api-key-permissions'
 import { createApp } from '#app'
 import { createAuth } from '#auth'
 import { observability } from '#bootstrap'
+import { createCatalogService } from '#catalog/catalog-service'
+import { createCatalogTrustPolicy } from '#catalog/trust-policy'
 import { createDb, createSql, pingDb } from '#db/index'
 import { loadEnv } from '#env'
+import { createScoreIngestService } from '#score-ingest-service'
 import { createScoreReadApi } from '#score-read-api'
 
 export const main = (): void => {
@@ -23,6 +26,13 @@ export const main = (): void => {
     allowedEmails,
     logger,
   })
+  const catalogService = createCatalogService(
+    db,
+    env.CATALOG_APPROVAL_THRESHOLD,
+  )
+  const catalogTrustPolicy = createCatalogTrustPolicy(
+    env.CATALOG_TRUSTED_EMAILS,
+  )
   const app = createApp({
     allowedEmails,
     authHandler: auth.handler,
@@ -30,6 +40,11 @@ export const main = (): void => {
     getApiKeyPermissions: createApiKeyPermissionsLookup(db),
     getSession: (headers) => auth.api.getSession({ headers }),
     logger,
+    scoreIngestService: createScoreIngestService(
+      db,
+      catalogService,
+      catalogTrustPolicy,
+    ),
     scoreReadApi: createScoreReadApi(db, logger),
   })
 

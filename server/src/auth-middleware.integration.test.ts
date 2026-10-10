@@ -1,6 +1,7 @@
 import { noopLogger } from '@fohte/service-kit/logger'
 import { inArray } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { okAsync } from 'neverthrow'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 import { createApiKeyPermissionsLookup } from '#api-key-permissions'
@@ -217,6 +218,9 @@ describe('authentication middleware integration', () => {
       getApiKeyPermissions: createApiKeyPermissionsLookup(db),
       getSession: (headers) => auth.api.getSession({ headers }),
       logger: noopLogger,
+      scoreIngestService: {
+        ingest: () => okAsync({ saved: 0, duplicates: 0 }),
+      },
       scoreReadApi: createScoreReadApi(db, noopLogger),
     })
 

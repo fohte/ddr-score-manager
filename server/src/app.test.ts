@@ -1,4 +1,5 @@
 import { createLogger, noopLogger } from '@fohte/service-kit/logger'
+import { okAsync } from 'neverthrow'
 import { describe, expect, it, vi } from 'vitest'
 
 import { type AppDeps, createApp } from '#app'
@@ -25,6 +26,9 @@ const createTestApp = (overrides: Partial<AppDeps> = {}) =>
     getApiKeyPermissions: () => Promise.resolve('{"upload":["create"]}'),
     getSession: () => Promise.resolve(testSession),
     logger: noopLogger,
+    scoreIngestService: {
+      ingest: () => okAsync({ saved: 0, duplicates: 0 }),
+    },
     scoreReadApi: createScoreReadApi(db, noopLogger),
     ...overrides,
   })
@@ -40,6 +44,13 @@ const jsonResponseOutput = async (response: Response) => ({
 const documentResponseOutput = (response: Response) => ({
   status: response.status,
   contentType: response.headers.get('content-type'),
+})
+
+const corsResponseOutput = (response: Response) => ({
+  status: response.status,
+  allowOrigin: response.headers.get('access-control-allow-origin'),
+  allowMethods: response.headers.get('access-control-allow-methods'),
+  allowHeaders: response.headers.get('access-control-allow-headers'),
 })
 
 describe('createApp', () => {
@@ -174,6 +185,39 @@ describe('createApp', () => {
       status: 401,
       contentType: 'application/json',
       body: { error: 'Unauthorized' },
+    })
+  })
+
+  it('rejects score uploads without an API key', async () => {
+    const protectedApp = createTestApp()
+    const response = await protectedApp.request('/api/scores/upload', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"pages":[]}',
+    })
+
+    expect(await jsonResponseOutput(response)).toEqual({
+      status: 401,
+      contentType: 'application/json',
+      body: { error: 'Unauthorized' },
+    })
+  })
+
+  it('answers the score upload CORS preflight for the configured origin', async () => {
+    const response = await app.request('/api/scores/upload', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://p.eagate.573.jp',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'x-api-key,content-type',
+      },
+    })
+
+    expect(corsResponseOutput(response)).toEqual({
+      status: 204,
+      allowOrigin: 'https://p.eagate.573.jp',
+      allowMethods: 'POST',
+      allowHeaders: 'x-api-key,content-type',
     })
   })
 })

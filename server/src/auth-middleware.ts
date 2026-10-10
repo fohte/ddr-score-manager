@@ -8,6 +8,7 @@ import { createAllowlistPolicy } from '#allowlist'
 export interface AuthMiddlewareEnvironment {
   Variables: {
     userId: string
+    userEmail: string
   }
 }
 
@@ -111,6 +112,7 @@ export const createAuthMiddleware = (
     }
 
     c.set('userId', session.user.id)
+    c.set('userEmail', session.user.email)
     return next()
   }
 }

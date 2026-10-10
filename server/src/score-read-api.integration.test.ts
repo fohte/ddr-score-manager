@@ -1,4 +1,5 @@
 import { noopLogger } from '@fohte/service-kit/logger'
+import { okAsync } from 'neverthrow'
 import { describe, expect, it } from 'vitest'
 
 import { createApp } from '#app'
@@ -33,6 +34,9 @@ describe('ScoreReadApi', () => {
           user: { id: userId, email: `${userId}@example.test` },
         }),
       logger: noopLogger,
+      scoreIngestService: {
+        ingest: () => okAsync({ saved: 0, duplicates: 0 }),
+      },
       scoreReadApi: createScoreReadApi(db, noopLogger),
     })
 
