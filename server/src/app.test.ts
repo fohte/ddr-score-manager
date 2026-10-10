@@ -2,13 +2,15 @@ import { createLogger, noopLogger } from '@fohte/service-kit/logger'
 import { describe, expect, it, vi } from 'vitest'
 
 import { type AppDeps, createApp } from '#app'
-import { createSql, pingDb } from '#db/index'
+import { createDb, createSql, pingDb } from '#db/index'
 import { PLACEHOLDER_DATABASE_URL } from '#db/placeholder'
 import { requireDatabaseUrl } from '#env'
+import { createScoreReadApi } from '#score-read-api'
 
 // Never queried by the tests below, so postgres.js's lazy connection never
 // actually dials this placeholder.
 const sql = createSql(PLACEHOLDER_DATABASE_URL)
+const db = createDb(sql)
 
 const testSession = {
   session: { id: 'test-session-id' },
@@ -23,6 +25,7 @@ const createTestApp = (overrides: Partial<AppDeps> = {}) =>
     getApiKeyPermissions: () => Promise.resolve('{"upload":["create"]}'),
     getSession: () => Promise.resolve(testSession),
     logger: noopLogger,
+    scoreReadApi: createScoreReadApi(db, noopLogger),
     ...overrides,
   })
 

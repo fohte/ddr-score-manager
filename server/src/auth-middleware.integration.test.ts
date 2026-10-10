@@ -13,6 +13,7 @@ import {
 import { createDb, createSql } from '#db/index'
 import { user } from '#db/schema/index'
 import { requireDatabaseUrl } from '#env'
+import { createScoreReadApi } from '#score-read-api'
 
 const TEST_EMAILS = ['middleware@example.test', 'another-reader@example.test']
 const PASSWORD = 'test-password-12345'
@@ -216,6 +217,7 @@ describe('authentication middleware integration', () => {
       getApiKeyPermissions: createApiKeyPermissionsLookup(db),
       getSession: (headers) => auth.api.getSession({ headers }),
       logger: noopLogger,
+      scoreReadApi: createScoreReadApi(db, noopLogger),
     })
 
     const response = await app.request('/api/auth/ok')

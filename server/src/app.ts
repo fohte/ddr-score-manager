@@ -11,8 +11,10 @@ import {
   type AuthMiddlewareEnvironment,
   createAuthMiddleware,
 } from '#auth-middleware'
+import type { ScoreReadApi } from '#score-read-api'
 
 export interface AppDeps extends AuthMiddlewareDeps {
+  scoreReadApi: ScoreReadApi
   logger: Logger
   authHandler: (request: Request) => Promise<Response>
   // A function rather than a `Sql` client directly: `AppType` below is
@@ -59,7 +61,7 @@ export const createApp = (deps: AppDeps) => {
     return c.json({ error: 'Internal Server Error' }, 500)
   })
 
-  const routes = app.get('/api/health', (c) =>
+  const healthRoute = app.get('/api/health', (c) =>
     c.json({ status: 'ok' } as const),
   )
 
@@ -67,6 +69,7 @@ export const createApp = (deps: AppDeps) => {
   app.all('/api/auth', (c) => deps.authHandler(c.req.raw))
   app.all('/api/auth/*', (c) => deps.authHandler(c.req.raw))
   app.use('/api/*', createAuthMiddleware(deps))
+  const routes = healthRoute.route('/api', deps.scoreReadApi)
 
   // Not part of the typed RPC surface: a plain readiness probe for
   // orchestrators, not an API endpoint consumed by the web client.
