@@ -11,6 +11,7 @@ import { createCatalogTrustPolicy } from '#catalog/trust-policy'
 import { createDb, createSql, pingDb } from '#db/index'
 import { loadEnv } from '#env'
 import { createScoreIngestService } from '#score-ingest-service'
+import { createScoreReadApi } from '#score-read-api'
 
 export const main = (): void => {
   const env = loadEnv()
@@ -44,6 +45,7 @@ export const main = (): void => {
       catalogService,
       catalogTrustPolicy,
     ),
+    scoreReadApi: createScoreReadApi(db, logger),
   })
 
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {

@@ -13,9 +13,11 @@ import {
   createAuthMiddleware,
 } from '#auth-middleware'
 import type { ScoreIngestService } from '#score-ingest-service'
+import type { ScoreReadApi } from '#score-read-api'
 import { createUploadApi } from '#upload-api'
 
 export interface AppDeps extends AuthMiddlewareDeps {
+  scoreReadApi: ScoreReadApi
   logger: Logger
   scoreIngestService: ScoreIngestService
   authHandler: (request: Request) => Promise<Response>
@@ -63,7 +65,7 @@ export const createApp = (deps: AppDeps) => {
     return c.json({ error: 'Internal Server Error' }, 500)
   })
 
-  const routes = app.get('/api/health', (c) =>
+  const healthRoute = app.get('/api/health', (c) =>
     c.json({ status: 'ok' } as const),
   )
 
@@ -79,6 +81,7 @@ export const createApp = (deps: AppDeps) => {
     }),
   )
   app.use('/api/*', createAuthMiddleware(deps))
+  const routes = healthRoute.route('/api', deps.scoreReadApi)
 
   const typedRoutes = routes.route(
     '/api/scores',

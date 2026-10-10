@@ -19,6 +19,7 @@ import { createCatalogTrustPolicy } from '#catalog/trust-policy'
 import { scoreRecords } from '#db/schema/index'
 import { setupDrizzleTx } from '#db/test/db'
 import { createScoreIngestService } from '#score-ingest-service'
+import { createScoreReadApi } from '#score-read-api'
 
 const uploadIntegrationOutput = <TResponses, TRecords, TCatalog>(
   responses: TResponses,
@@ -52,6 +53,7 @@ describe('score upload API integration', () => {
         createCatalogService(db, 2),
         createCatalogTrustPolicy(userEmail),
       ),
+      scoreReadApi: createScoreReadApi(db, noopLogger),
     })
     const body = JSON.stringify({
       pages: [
