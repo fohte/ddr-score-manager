@@ -1,9 +1,10 @@
 import { noopLogger } from '@fohte/service-kit/logger'
 import { Hono } from 'hono'
-import { okAsync } from 'neverthrow'
+import { errAsync, okAsync } from 'neverthrow'
 import { describe, expect, it } from 'vitest'
 
 import type { AuthMiddlewareEnvironment } from '#auth-middleware'
+import { CatalogError } from '#catalog/errors'
 import { scoreListPage, scoreRow } from '#catalog/test/fixtures'
 import type { ScoreIngestService } from '#score-ingest-service'
 import { createUploadApi } from '#upload-api'
@@ -113,6 +114,35 @@ describe('POST /api/scores/upload', () => {
       })
     },
   )
+
+  it('returns an internal server error when score ingestion fails', async () => {
+    const calls: ScoreIngestInput[] = []
+    const service: ScoreIngestService = {
+      ingest: (input) => {
+        calls.push(input)
+        return errAsync(new CatalogError('ingestion failed'))
+      },
+    }
+    const app = createTestApi(service)
+    const pages = [scoreListPage([scoreRow({ musicId: 'example123' })])]
+    const response = await app.request(
+      '/api/scores/upload',
+      requestJson({ pages }),
+    )
+
+    expect(await uploadResponseOutput(response, calls)).toEqual({
+      status: 500,
+      contentType: 'application/json',
+      body: { error: 'Internal Server Error' },
+      calls: [
+        {
+          userId: 'upload-user',
+          userEmail: 'owner@example.test',
+          pages,
+        },
+      ],
+    })
+  })
 
   it('rejects bodies larger than one MiB without invoking the ingest service', async () => {
     const calls: ScoreIngestInput[] = []

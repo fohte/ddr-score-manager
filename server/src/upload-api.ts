@@ -45,6 +45,7 @@ const readBody = async (request: Request): Promise<BodyReadResult> => {
       const reader = body.getReader()
       const chunks: Uint8Array[] = []
       let byteLength = 0
+      // Content-Length が欠落または過少でも、実際の読み取り量で上限を守る。
       for (;;) {
         const chunk = await reader.read()
         if (chunk.done) break

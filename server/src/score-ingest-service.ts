@@ -5,9 +5,10 @@ import type {
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { err, ok, type Result, ResultAsync } from 'neverthrow'
 
-import { type CatalogError, CatalogPersistenceError } from '#catalog/errors'
+import type { CatalogError } from '#catalog/errors'
 import { runInTransaction } from '#catalog/transaction'
 import type { CatalogTrustPolicy } from '#catalog/trust-policy'
+import { tryCatalog } from '#catalog/try-catalog'
 import type { CatalogService } from '#catalog/types'
 import type { Db, Tx } from '#db/index'
 import { scoreRecords } from '#db/schema/index'
@@ -145,10 +146,9 @@ export const createScoreIngestService = (
 ): ScoreIngestService => ({
   ingest: (input) =>
     runInTransaction(db, (tx) =>
-      ResultAsync.fromPromise(
-        ingestInTransaction(tx, input, catalogService, trustPolicy),
-        (cause: unknown) =>
-          new CatalogPersistenceError('failed to ingest scores', cause),
-      ).andThen((result) => result),
+      tryCatalog(
+        () => ingestInTransaction(tx, input, catalogService, trustPolicy),
+        'failed to ingest scores',
+      ),
     ),
 })
