@@ -80,11 +80,11 @@ jobs:
             .github/workflows/test.yml
 
       - name: Generate database documentation
-        if: steps.db-doc-changes.outputs.any_changed == 'true'
+        if: steps.db-doc-changes.outputs.any_modified == 'true'
         run: mise run db:doc
 
       - name: Stage generated database documentation
-        if: steps.db-doc-changes.outputs.any_changed == 'true'
+        if: steps.db-doc-changes.outputs.any_modified == 'true'
         run: git add -- server/docs/db
 
       - name: Run lefthook
@@ -140,7 +140,7 @@ jobs:
         env:
           # Changes to these files affect every package, so they trigger the full matrix.
           GLOBAL_PATHS_REGEX: '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.github/workflows/test\.yml)$'
-          CHANGED_FILES: ${{ steps.changed.outputs.all_changed_files }}
+          CHANGED_FILES: ${{ steps.changed.outputs.all_modified_files }}
         run: |
           # Workspace packages are the directories holding a non-root package.json
           # that declares a `test` script. Packages without one (e.g. node
@@ -303,3 +303,6 @@ jobs:
 
       - name: Run knip
         run: pnpm exec knip
+
+      - name: Run knip in production mode
+        run: pnpm exec knip --production

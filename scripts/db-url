@@ -18,9 +18,9 @@ case "$environment" in
 esac
 
 if [ "$package" = "." ]; then
-  database_name="ddr-score-manager_$environment"
+  database_name="ddr_score_manager_$environment"
 else
-  database_name="ddr-score-manager_${package}_$environment"
+  database_name="ddr_score_manager_${package//-/_}_$environment"
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -36,4 +36,4 @@ case "$port" in
   '' | *[!0-9]*) port=0 ;;
 esac
 
-printf 'postgresql://ddr-score-manager:ddr-score-manager@127.0.0.1:%s/%s\n' "$port" "$database_name"
+printf 'postgresql://ddr_score_manager:ddr_score_manager@127.0.0.1:%s/%s\n' "$port" "$database_name"
