@@ -6,10 +6,17 @@
       "ignoreDependencies": ["@commitlint/cli"]
     },
     "server": {
-      "entry": ["src/auth.ts", "src/db/migrate.{ts,mts,cts}!"],
+      "entry": [
+        "src/main.ts!",
+        "src/auth-cli.ts",
+        "src/db/migrate.{ts,mts,cts}!"
+      ],
       "project": [
         "src/**/*.ts!",
+        "!src/**/*.test.ts!",
         "!src/**/test/**!",
+        "!src/auth-cli.ts!",
+        "!src/db/placeholder.ts!",
         "!src/resolve-test-database-url.ts!"
       ]
     }

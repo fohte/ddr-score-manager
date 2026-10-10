@@ -2,16 +2,51 @@ import { createLogger } from '@fohte/service-kit/logger'
 import { serve } from '@hono/node-server'
 import * as Sentry from '@sentry/node'
 
+import { createApiKeyPermissionsLookup } from '#api-key-permissions'
 import { createApp } from '#app'
+import { createAuth } from '#auth'
 import { observability } from '#bootstrap'
-import { createSql, pingDb } from '#db/index'
+import { createCatalogService } from '#catalog/catalog-service'
+import { createCatalogTrustPolicy } from '#catalog/trust-policy'
+import { createDb, createSql, pingDb } from '#db/index'
 import { loadEnv } from '#env'
+import { createScoreIngestService } from '#score-ingest-service'
+import { createScoreReadApi } from '#score-read-api'
 
 export const main = (): void => {
   const env = loadEnv()
   const logger = createLogger({ level: env.LOG_LEVEL })
   const sql = createSql(env.DATABASE_URL)
-  const app = createApp({ logger, checkDb: () => pingDb(sql) })
+  const db = createDb(sql)
+  const allowedEmails = env.AUTH_ALLOWED_EMAILS
+  const auth = createAuth({
+    db,
+    googleClientId: env.GOOGLE_CLIENT_ID,
+    googleClientSecret: env.GOOGLE_CLIENT_SECRET,
+    allowedEmails,
+    logger,
+  })
+  const catalogService = createCatalogService(
+    db,
+    env.CATALOG_APPROVAL_THRESHOLD,
+  )
+  const catalogTrustPolicy = createCatalogTrustPolicy(
+    env.CATALOG_TRUSTED_EMAILS,
+  )
+  const app = createApp({
+    allowedEmails,
+    authHandler: auth.handler,
+    checkDb: () => pingDb(sql),
+    getApiKeyPermissions: createApiKeyPermissionsLookup(db),
+    getSession: (headers) => auth.api.getSession({ headers }),
+    logger,
+    scoreIngestService: createScoreIngestService(
+      db,
+      catalogService,
+      catalogTrustPolicy,
+    ),
+    scoreReadApi: createScoreReadApi(db, logger),
+  })
 
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
     logger.info({ port: info.port }, 'server listening')

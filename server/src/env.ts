@@ -26,6 +26,9 @@ export interface Env {
   PORT: number
   LOG_LEVEL: LogLevel
   DATABASE_URL: string
+  AUTH_ALLOWED_EMAILS: string
+  GOOGLE_CLIENT_ID: string
+  GOOGLE_CLIENT_SECRET: string
   CATALOG_TRUSTED_EMAILS: string
   CATALOG_APPROVAL_THRESHOLD: number
 }
@@ -52,6 +55,9 @@ export const loadEnv = (source: EnvSource = process.env): Env => {
     PORT: optionalInt(source, 'PORT', DEFAULT_PORT, { min: 1, max: 65_535 }),
     LOG_LEVEL: optionalEnum(source, 'LOG_LEVEL', LOG_LEVELS, DEFAULT_LOG_LEVEL),
     DATABASE_URL: requireString(source, 'DATABASE_URL'),
+    AUTH_ALLOWED_EMAILS: optionalString(source, 'AUTH_ALLOWED_EMAILS', ''),
+    GOOGLE_CLIENT_ID: optionalString(source, 'GOOGLE_CLIENT_ID', ''),
+    GOOGLE_CLIENT_SECRET: optionalString(source, 'GOOGLE_CLIENT_SECRET', ''),
     CATALOG_TRUSTED_EMAILS: optionalString(
       source,
       'CATALOG_TRUSTED_EMAILS',
