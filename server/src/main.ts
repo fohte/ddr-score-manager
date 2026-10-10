@@ -8,6 +8,7 @@ import { createAuth } from '#auth'
 import { observability } from '#bootstrap'
 import { createDb, createSql, pingDb } from '#db/index'
 import { loadEnv } from '#env'
+import { createScoreReadApi } from '#score-read-api'
 
 export const main = (): void => {
   const env = loadEnv()
@@ -29,6 +30,7 @@ export const main = (): void => {
     getApiKeyPermissions: createApiKeyPermissionsLookup(db),
     getSession: (headers) => auth.api.getSession({ headers }),
     logger,
+    scoreReadApi: createScoreReadApi(db, logger),
   })
 
   const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
