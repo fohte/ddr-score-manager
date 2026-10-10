@@ -1,6 +1,6 @@
 import { defineConfig } from 'drizzle-kit'
 
-import { PLACEHOLDER_DATABASE_URL } from '#db/index'
+import { PLACEHOLDER_DATABASE_URL } from '#db/placeholder'
 
 const url =
   process.env['DATABASE_URL'] ??

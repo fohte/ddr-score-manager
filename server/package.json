@@ -15,7 +15,7 @@
     "build": "tsup",
     "start": "node --import @fohte/service-kit/otel-register dist/index.js",
     "dev": "tsx watch --import @fohte/service-kit/otel-register src/index.ts",
-    "auth:generate": "DATABASE_URL=postgresql://localhost:5432/placeholder better-auth generate --config ./src/auth.ts --output ./src/db/schema/auth.ts --yes",
+    "auth:generate": "DATABASE_URL=postgresql://localhost:5432/placeholder better-auth generate --config ./src/auth-cli.ts --output ./src/db/schema/auth.ts --yes",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts"
   },
