@@ -5,15 +5,19 @@ import type { Logger } from '@fohte/service-kit/logger'
 import { captureWithFingerprint } from '@fohte/service-kit/observability'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 
 import {
   type AuthMiddlewareDeps,
   type AuthMiddlewareEnvironment,
   createAuthMiddleware,
 } from '#auth-middleware'
+import type { ScoreIngestService } from '#score-ingest-service'
+import { createUploadApi } from '#upload-api'
 
 export interface AppDeps extends AuthMiddlewareDeps {
   logger: Logger
+  scoreIngestService: ScoreIngestService
   authHandler: (request: Request) => Promise<Response>
   // A function rather than a `Sql` client directly: `AppType` below is
   // consumed cross-package for Hono RPC typing, and importing `#db` here
@@ -66,7 +70,20 @@ export const createApp = (deps: AppDeps) => {
   // Hono は先に登録した handler を優先するため、認証 endpoint を middleware より先に置く。
   app.all('/api/auth', (c) => deps.authHandler(c.req.raw))
   app.all('/api/auth/*', (c) => deps.authHandler(c.req.raw))
+  app.use(
+    '/api/scores/upload',
+    cors({
+      origin: 'https://p.eagate.573.jp',
+      allowHeaders: ['x-api-key', 'content-type'],
+      allowMethods: ['POST'],
+    }),
+  )
   app.use('/api/*', createAuthMiddleware(deps))
+
+  const typedRoutes = routes.route(
+    '/api/scores',
+    createUploadApi(deps.scoreIngestService, deps.logger),
+  )
 
   // Not part of the typed RPC surface: a plain readiness probe for
   // orchestrators, not an API endpoint consumed by the web client.
@@ -85,7 +102,7 @@ export const createApp = (deps: AppDeps) => {
   app.all('/api/*', (c) => c.json({ error: 'Not Found' }, 404))
   app.get('*', serveStatic({ path: `${STATIC_ROOT}/index.html` }))
 
-  return routes
+  return typedRoutes
 }
 
 export type AppType = ReturnType<typeof createApp>
