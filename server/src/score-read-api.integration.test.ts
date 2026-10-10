@@ -151,6 +151,85 @@ describe('ScoreReadApi', () => {
     })
   })
 
+  it('matches LIKE metacharacters literally in the title filter', async () => {
+    const db = getDb()
+    await insertUser(db, 'reader')
+    await register({
+      userId: 'reader',
+      trusted: true,
+      pages: [
+        scoreListPage([
+          scoreRow({
+            musicId: 'literal01',
+            musicTitle: '50% Song',
+            playStyle: 'sp',
+            difficulty: 'basic',
+          }),
+          scoreRow({
+            musicId: 'near0001',
+            musicTitle: '50x Song',
+            playStyle: 'sp',
+            difficulty: 'basic',
+          }),
+        ]),
+        musicDetailPage({
+          musicId: 'literal01',
+          title: '50% Song',
+          artist: 'Imaginary Artist',
+          charts: [{ playStyle: 'sp', difficulty: 'basic', level: 10 }],
+        }),
+        musicDetailPage({
+          musicId: 'near0001',
+          title: '50x Song',
+          artist: 'Imaginary Artist',
+          charts: [{ playStyle: 'sp', difficulty: 'basic', level: 10 }],
+        }),
+      ],
+    })
+    await insertScoreRecord(db, {
+      userId: 'reader',
+      musicId: 'literal01',
+      playStyle: 'sp',
+      difficulty: 'basic',
+      score: 900_000,
+      rank: 'AA',
+      recordedAt: new Date('2025-01-01T00:00:00.000Z'),
+    })
+    await insertScoreRecord(db, {
+      userId: 'reader',
+      musicId: 'near0001',
+      playStyle: 'sp',
+      difficulty: 'basic',
+      score: 850_000,
+      rank: 'A',
+      recordedAt: new Date('2025-01-01T00:00:00.000Z'),
+    })
+
+    const app = createTestApp('reader', db)
+    const response = await app.request('/api/scores?title=%25')
+
+    expect(await responseOutput(response)).toEqual({
+      status: 200,
+      contentType: 'application/json',
+      body: {
+        items: [
+          {
+            musicId: 'literal01',
+            title: '50% Song',
+            playStyle: 'sp',
+            difficulty: 'basic',
+            level: 10,
+            score: 900_000,
+            rank: 'AA',
+            clearType: null,
+            flareRank: null,
+            recordedAt: '2025-01-01T00:00:00.000Z',
+          },
+        ],
+      },
+    })
+  })
+
   it('returns the session user score history for a visible pending music', async () => {
     const db = getDb()
     await insertUser(db, 'submitter')

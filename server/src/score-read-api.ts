@@ -1,4 +1,9 @@
-import type { Difficulty, PlayStyle } from '@fohte/ddr-score-manager-parser'
+import {
+  type Difficulty,
+  difficultySchema,
+  type PlayStyle,
+  playStyleSchema,
+} from '@fohte/ddr-score-manager-parser'
 import type { Logger } from '@fohte/service-kit/logger'
 import { and, asc, desc, eq, ilike, type SQL } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -38,20 +43,11 @@ interface MusicScoresResponse {
   }[]
 }
 
-const playStyles = ['sp', 'dp'] as const satisfies readonly PlayStyle[]
-const difficulties = [
-  'beginner',
-  'basic',
-  'difficult',
-  'expert',
-  'challenge',
-] as const satisfies readonly Difficulty[]
-
 const isPlayStyle = (value: string): value is PlayStyle =>
-  playStyles.some((playStyle) => playStyle === value)
+  playStyleSchema.safeParse(value).success
 
 const isDifficulty = (value: string): value is Difficulty =>
-  difficulties.some((difficulty) => difficulty === value)
+  difficultySchema.safeParse(value).success
 
 const escapeLikePattern = (value: string): string =>
   value.replace(/[\\%_]/g, '\\$&')
