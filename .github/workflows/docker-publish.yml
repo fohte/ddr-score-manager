@@ -12,11 +12,13 @@ permissions:
 
 concurrency:
   group: docker-publish-${{ github.ref }}
+  queue: max
   cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     strategy:
       matrix:

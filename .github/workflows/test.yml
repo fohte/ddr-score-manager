@@ -10,6 +10,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: octo-sts/action@f603d3be9d8dd9871a265776e625a27b00effe05 # v1.1.1
@@ -120,6 +121,7 @@ jobs:
   # `unit-test` gate below, so the per-package legs are enumerated here instead.
   setup:
     runs-on: ubuntu-slim
+    timeout-minutes: 30
     outputs:
       packages: ${{ steps.set-packages.outputs.packages }}
     steps:
@@ -182,6 +184,7 @@ jobs:
         package: ${{ fromJSON(needs.setup.outputs.packages) }}
     name: 'unit-test (${{ matrix.package }})'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -263,6 +266,7 @@ jobs:
   # has no `needs`, so this gate (skip == success) stands in for both.
   unit-test:
     runs-on: ubuntu-slim
+    timeout-minutes: 30
     needs:
       - setup
       - unit-test-run
@@ -273,6 +277,7 @@ jobs:
 
   knip:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
