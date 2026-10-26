@@ -53,7 +53,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -200,7 +202,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -250,7 +254,13 @@ jobs:
 
       - name: Start PostgreSQL for server tests
         if: matrix.package == 'server'
+<<<<<<< before updating
         run: mise run db:up
+||||||| last update
+        run: pnpm install --filter ./${{ matrix.package }}... --frozen-lockfile
+=======
+        run: pnpm install --filter "{./${{ matrix.package }}}..." --frozen-lockfile
+>>>>>>> after updating
 
       - name: Resolve server database URLs
         if: matrix.package == 'server'
@@ -294,7 +304,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
