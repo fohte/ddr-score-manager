@@ -20,7 +20,7 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
-    "@better-auth/api-key": "1.6.26",
+    "@better-auth/api-key": "1.7.12",
     "@fohte/ddr-score-manager-parser": "workspace:*",
     "@fohte/service-kit": "0.1.16",
     "@hono/node-server": "2.0.10",
