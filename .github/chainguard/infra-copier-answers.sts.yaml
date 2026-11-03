@@ -1,6 +1,0 @@
-issuer: https://token.actions.githubusercontent.com
-subject_pattern: ^repo:fohte@11088009/infra@726725024:ref:refs/heads/master$
-claim_pattern:
-  job_workflow_ref: ^fohte/infra/\.github/workflows/sync-copier-answers\.yml@[^@]+$
-permissions:
-  contents: read

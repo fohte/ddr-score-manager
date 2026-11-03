@@ -3,7 +3,8 @@
   "treatConfigHintsAsErrors": true,
   "workspaces": {
     ".": {
-      "ignoreDependencies": ["@commitlint/cli"]
+      "ignoreDependencies": ["@commitlint/cli"],
+      "ignore": ["commitlint-plugin-no-external-refs.cjs"]
     },
     "server": {
       "entry": [
