@@ -53,7 +53,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -192,6 +194,10 @@ jobs:
         with:
           version: 2026.9.14
 
+      - name: Start PostgreSQL
+        if: ${{ contains(fromJSON('["server"]'), matrix.package) }}
+        run: mise run db:up
+
       # corepack creates the pnpm executable inside mise's node install bin
       # directory; reshim so the mise shims dir (which is on PATH) picks it up.
       - run: |
@@ -200,7 +206,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -250,7 +258,13 @@ jobs:
 
       - name: Start PostgreSQL for server tests
         if: matrix.package == 'server'
+<<<<<<< before updating
         run: mise run db:up
+||||||| last update
+        run: pnpm install --filter ./${{ matrix.package }}... --frozen-lockfile
+=======
+        run: pnpm install --filter "{./${{ matrix.package }}}..." --frozen-lockfile
+>>>>>>> after updating
 
       - name: Resolve server database URLs
         if: matrix.package == 'server'
@@ -260,7 +274,7 @@ jobs:
 
       - name: Run tests
         working-directory: ${{ matrix.package }}
-        run: pnpm run test
+        run: ${{ contains(fromJSON('["server"]'), matrix.package) && 'mise exec -- ' || '' }}pnpm run test # Re-evaluate DB URLs after db:up assigns the host port.
 
   # Fixed name for branch protection: matrix leg names are dynamic, and knip
   # has no `needs`, so this gate (skip == success) stands in for both.
@@ -294,7 +308,9 @@ jobs:
 
       - name: Get pnpm store directory
         id: pnpm-store
-        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+        run: |
+          store_path=$(pnpm store path)
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
